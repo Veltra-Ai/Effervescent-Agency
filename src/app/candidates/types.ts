@@ -1,0 +1,32 @@
+export interface Candidate {
+  id: string;
+  created_at: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  instagram: string | null;
+  primary_location: string;
+  second_location: string | null;
+  manual_location: string | null;
+  is_student: boolean;
+  home_city: string | null;
+  does_drive: boolean;
+  role_interest: string;
+  photo_urls: string[];
+  passport_url: string | null;
+  has_non_uk_passport: boolean;
+  share_code: string | null;
+  has_prior_experience: boolean;
+  previous_company: string | null;
+  years_experience: number | null;
+  understand_role: string | null;
+  why_good_fit: string | null;
+  sales_experience: string | null;
+  available_from: string | null;
+  self_employed: boolean;
+  weekend_work: boolean;
+  heard_about: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  passport_valid: boolean | null;
+  is_uk_passport: boolean | null;
+}

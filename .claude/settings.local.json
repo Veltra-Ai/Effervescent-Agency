@@ -3,7 +3,9 @@
     "allow": [
       "Bash(find 'D:\\\\Veltra Ai\\\\my-app\\\\src' -name *.tsx -o -name *.ts)",
       "Bash(npx tsc:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
