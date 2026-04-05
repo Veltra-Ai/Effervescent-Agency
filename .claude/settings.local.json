@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'D:\\\\Veltra Ai\\\\my-app\\\\src' -name *.tsx -o -name *.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)"
+    ]
+  }
+}
