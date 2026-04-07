@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { Candidate } from './types';
 
 const APPROVED_WEBHOOK = 'https://n8n.veltraai.net/webhook/candidate-approved';
+const REJECTED_WEBHOOK = 'https://n8n.veltraai.net/webhook/rejected';
 
 export async function approveCandidate(candidate: Candidate): Promise<{ error?: string }> {
   const { error } = await supabase
@@ -26,13 +27,27 @@ export async function approveCandidate(candidate: Candidate): Promise<{ error?: 
   return {};
 }
 
-export async function rejectCandidate(id: string): Promise<{ error?: string }> {
+export async function rejectCandidate(
+  candidate: Pick<Candidate, 'id' | 'full_name' | 'phone'>,
+  reason: string,
+): Promise<{ error?: string }> {
   const { error } = await supabase
     .from('milli_candidates')
     .update({ status: 'rejected' })
-    .eq('id', id);
+    .eq('id', candidate.id);
 
   if (error) return { error: error.message };
+
+  try {
+    await fetch(REJECTED_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: candidate.full_name, phone: candidate.phone, reason }),
+    });
+  } catch {
+    // Webhook failure is non-fatal
+  }
+
   return {};
 }
 

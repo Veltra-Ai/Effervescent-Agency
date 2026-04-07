@@ -97,6 +97,77 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// ─── Reject Reason Modal ───────────────────────────────────────────────────────
+
+const REJECT_REASONS = [
+  'Profile doesn\'t meet our requirements',
+  'Insufficient experience',
+  'Location not currently covered',
+  'Incomplete or unclear application',
+  'Age requirement not met',
+  'Position no longer available',
+  'Duplicate application',
+  'Failed to respond / uncontactable',
+];
+
+function RejectReasonModal({
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+  isPending: boolean;
+}) {
+  const [selected, setSelected] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-sm shadow-2xl p-6">
+        <h3 className="text-white font-semibold text-base mb-1">Reason for rejection</h3>
+        <p className="text-gray-500 text-xs mb-4">Select a reason — this will be sent to the webhook.</p>
+        <div className="space-y-2 mb-5">
+          {REJECT_REASONS.map((reason) => (
+            <button
+              key={reason}
+              onClick={() => setSelected(reason)}
+              className={`w-full text-left px-3 py-2.5 rounded-xl text-sm border transition-all ${
+                selected === reason
+                  ? 'bg-red-500/20 border-red-500/50 text-red-300'
+                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              {reason}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2 rounded-xl text-sm font-medium border border-white/10 text-gray-400 hover:bg-white/5 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => selected && onConfirm(selected)}
+            disabled={!selected || isPending}
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold
+              bg-red-500/20 text-red-400 border border-red-500/30
+              hover:bg-red-500/30 hover:border-red-500/50
+              disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {isPending
+              ? <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+              : <XCircle className="w-4 h-4" />}
+            Confirm Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Candidate Detail Modal ────────────────────────────────────────────────────
 
 function CandidateModal({
@@ -113,6 +184,7 @@ function CandidateModal({
   const [activeAction, setActiveAction] = useState<
     'approve' | 'reject' | 'trial_offer' | 'trial_success' | 'trial_fail' | null
   >(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   function handleApprove() {
     setActionError('');
@@ -128,14 +200,15 @@ function CandidateModal({
     });
   }
 
-  function handleReject() {
+  function handleReject(reason: string) {
     setActionError('');
     setActiveAction('reject');
     startTransition(async () => {
-      const result = await rejectCandidate(candidate.id);
+      const result = await rejectCandidate({ id: candidate.id, full_name: candidate.full_name, phone: candidate.phone }, reason);
       if (result.error) {
         setActionError(result.error);
       } else {
+        setShowRejectModal(false);
         onStatusChange(candidate.id, { status: 'rejected' });
       }
       setActiveAction(null);
@@ -238,19 +311,25 @@ function CandidateModal({
                 Approve
               </button>
               <button
-                onClick={handleReject}
+                onClick={() => setShowRejectModal(true)}
                 disabled={isPending}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
                   bg-red-500/15 text-red-400 border border-red-500/25
                   hover:bg-red-500/25 hover:border-red-500/40
                   disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {isPending && activeAction === 'reject'
-                  ? <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                  : <XCircle className="w-4 h-4" />}
+                <XCircle className="w-4 h-4" />
                 Reject
               </button>
             </div>
+          )}
+
+          {showRejectModal && (
+            <RejectReasonModal
+              onConfirm={handleReject}
+              onCancel={() => setShowRejectModal(false)}
+              isPending={isPending && activeAction === 'reject'}
+            />
           )}
 
           {candidate.status === 'approved' && candidate.wa_sent_at && (
@@ -487,6 +566,7 @@ function RowActions({
 }) {
   const [isPending, startTransition] = useTransition();
   const [activeAction, setActiveAction] = useState<'approve' | 'reject' | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   if (candidate.status !== 'pending') return null;
 
@@ -500,17 +580,27 @@ function RowActions({
     });
   }
 
-  function handleReject(e: React.MouseEvent) {
-    e.stopPropagation();
+  function handleRejectConfirm(reason: string) {
     setActiveAction('reject');
     startTransition(async () => {
-      const result = await rejectCandidate(candidate.id);
-      if (!result.error) onStatusChange(candidate.id, { status: 'rejected' });
+      const result = await rejectCandidate({ id: candidate.id, full_name: candidate.full_name, phone: candidate.phone }, reason);
+      if (!result.error) {
+        setShowRejectModal(false);
+        onStatusChange(candidate.id, { status: 'rejected' });
+      }
       setActiveAction(null);
     });
   }
 
   return (
+    <>
+    {showRejectModal && (
+      <RejectReasonModal
+        onConfirm={handleRejectConfirm}
+        onCancel={() => setShowRejectModal(false)}
+        isPending={isPending && activeAction === 'reject'}
+      />
+    )}
     <div className="flex items-center gap-1.5">
       <button
         onClick={handleApprove}
@@ -524,7 +614,7 @@ function RowActions({
         }
       </button>
       <button
-        onClick={handleReject}
+        onClick={(e) => { e.stopPropagation(); setShowRejectModal(true); }}
         disabled={isPending}
         title="Reject"
         className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
@@ -535,6 +625,7 @@ function RowActions({
         }
       </button>
     </div>
+    </>
   );
 }
 
@@ -626,6 +717,8 @@ export function CandidatesDashboard({ initialCandidates }: { initialCandidates: 
   const [statusFilter, setStatusFilter] = useState<'all' | Candidate['status'] | 'invite_sent' | 'trial_offered_filter' | 'onboarded_filter'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortAsc, setSortAsc] = useState(false);
+  const [pendingReject, setPendingReject] = useState<Candidate | null>(null);
+  const [rejectPending, setRejectPending] = useState(false);
 
   function handleStatusChange(id: string, patch: Partial<Candidate>) {
     setCandidates((prev) =>
@@ -637,6 +730,10 @@ export function CandidatesDashboard({ initialCandidates }: { initialCandidates: 
   }
 
   async function handleStatusDirect(candidate: Candidate, newStatus: Candidate['status']) {
+    if (newStatus === 'rejected') {
+      setPendingReject(candidate);
+      return;
+    }
     const confirmed = window.confirm(
       `Change "${candidate.full_name}" status from "${STATUS_LABEL[candidate.status]}" to "${STATUS_LABEL[newStatus]}"?\n\nSave changes?`
     );
@@ -647,6 +744,22 @@ export function CandidatesDashboard({ initialCandidates }: { initialCandidates: 
       return;
     }
     handleStatusChange(candidate.id, result.patch as Partial<Candidate>);
+  }
+
+  async function handlePendingRejectConfirm(reason: string) {
+    if (!pendingReject) return;
+    setRejectPending(true);
+    const result = await rejectCandidate(
+      { id: pendingReject.id, full_name: pendingReject.full_name, phone: pendingReject.phone },
+      reason,
+    );
+    setRejectPending(false);
+    if (result.error) {
+      window.alert(`Failed to reject: ${result.error}`);
+      return;
+    }
+    handleStatusChange(pendingReject.id, { status: 'rejected' });
+    setPendingReject(null);
   }
 
   function toggleSort(key: SortKey) {
@@ -700,6 +813,13 @@ export function CandidatesDashboard({ initialCandidates }: { initialCandidates: 
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {pendingReject && (
+        <RejectReasonModal
+          onConfirm={handlePendingRejectConfirm}
+          onCancel={() => setPendingReject(null)}
+          isPending={rejectPending}
+        />
+      )}
       {/* Header */}
       <header className="bg-[#0d0d0d]/95 backdrop-blur-sm border-b border-[#1a1a1a] sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
