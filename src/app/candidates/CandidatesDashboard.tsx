@@ -48,16 +48,17 @@ function formatDate(iso: string) {
 const STATUS_LABEL: Record<Candidate["status"], string> = {
   pending: "Pending",
   approved: "Approved",
+  "interview booked": "Interview Booked",
   rejected: "Rejected",
   trial_offered: "Trial Offered",
   onboarding: "Onboarding",
   "on-boarded": "Onboarded",
 };
 
-// Logical next statuses for each status
 const STATUS_TRANSITIONS: Record<Candidate["status"], Candidate["status"][]> = {
   pending: ["approved", "rejected"],
-  approved: ["trial_offered", "rejected"],
+  approved: ["interview booked", "rejected"],
+  "interview booked": ["trial_offered", "rejected"],
   trial_offered: ["onboarding", "rejected"],
   onboarding: ["on-boarded", "rejected"],
   "on-boarded": [],
@@ -68,6 +69,7 @@ function StatusBadge({ status }: { status: Candidate["status"] }) {
   const map: Record<Candidate["status"], string> = {
     pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25",
     approved: "bg-green-500/15 text-green-400 border-green-500/25",
+    "interview booked": "bg-sky-500/15 text-sky-400 border-sky-500/25",
     rejected: "bg-red-500/15 text-red-400 border-red-500/25",
     trial_offered: "bg-purple-500/15 text-purple-400 border-purple-500/25",
     onboarding: "bg-blue-500/15 text-blue-400 border-blue-500/25",
@@ -437,6 +439,37 @@ function CandidateModal({
                   <Star className="w-4 h-4" />
                 )}
                 Mark as Trial Offered
+              </button>
+            </div>
+          )}
+
+          {candidate.status === "interview booked" && (
+            <div className="flex gap-3">
+              <button
+                onClick={handleTrialOffer}
+                disabled={isPending}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
+        bg-purple-500/15 text-purple-400 border border-purple-500/25
+        hover:bg-purple-500/25 hover:border-purple-500/40
+        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isPending && activeAction === "trial_offer" ? (
+                  <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                ) : (
+                  <Star className="w-4 h-4" />
+                )}
+                Mark as Trial Offered
+              </button>
+              <button
+                onClick={() => setShowRejectModal(true)}
+                disabled={isPending}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
+        bg-red-500/15 text-red-400 border border-red-500/25
+        hover:bg-red-500/25 hover:border-red-500/40
+        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <XCircle className="w-4 h-4" />
+                Reject
               </button>
             </div>
           )}
@@ -1072,6 +1105,8 @@ export function CandidatesDashboard({
     onboarding: candidates.filter((c) => c.status === "onboarding").length,
     onboarded: candidates.filter((c) => c.status === "on-boarded").length,
     rejected: candidates.filter((c) => c.status === "rejected").length,
+    interviewBooked: candidates.filter((c) => c.status === "interview booked")
+      .length,
   };
 
   function SortIcon({ k }: { k: SortKey }) {
@@ -1176,6 +1211,13 @@ export function CandidatesDashboard({
               bg: "bg-green-500/10 border-green-500/20",
             },
             {
+              label: "Interview Booked",
+              value: counts.interviewBooked,
+              icon: Calendar,
+              color: "text-sky-400",
+              bg: "bg-sky-500/10 border-sky-500/20",
+            },
+            {
               label: "Trial Offered",
               value: counts.trialOffered,
               icon: Star,
@@ -1245,6 +1287,7 @@ export function CandidatesDashboard({
                 { value: "pending", label: "Pending" },
                 { value: "invite_sent", label: "Invite Sent" },
                 { value: "approved", label: "Approved" },
+                { value: "interview booked", label: "Interview Booked" },
                 { value: "trial_offered_filter", label: "Trial Offered" },
                 { value: "onboarding", label: "Onboarding" },
                 { value: "onboarded_filter", label: "Onboarded" },

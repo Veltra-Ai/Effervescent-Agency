@@ -31,6 +31,7 @@ export interface Candidate {
   status:
     | "pending"
     | "approved"
+    | "interview booked"
     | "rejected"
     | "trial_offered"
     | "onboarding"
