@@ -1013,6 +1013,74 @@ function CandidateModal({
             )}
           </div>
 
+          {/* Submitted Forms Info */}
+          {(candidate.home_address ||
+            candidate.emergency_contact ||
+            candidate.bank_details ||
+            candidate.availability_dates ||
+            candidate.availability_locations ||
+            candidate.availability_comments) && (
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
+                Submitted Forms Info
+              </h4>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                <InfoRow
+                  label="Home Address"
+                  value={candidate.home_address}
+                />
+                <InfoRow
+                  label="Emergency Contact"
+                  value={candidate.emergency_contact}
+                />
+                <InfoRow
+                  label="Bank Account Number"
+                  value={candidate.bank_details}
+                />
+              </div>
+              {candidate.availability_dates && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    Dates Available
+                  </p>
+                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                    {(Array.isArray(candidate.availability_dates)
+                      ? candidate.availability_dates
+                      : JSON.parse(
+                          candidate.availability_dates as unknown as string,
+                        )
+                    ).join(", ")}
+                  </p>
+                </div>
+              )}
+              {candidate.availability_locations && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    Locations Available
+                  </p>
+                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                    {(Array.isArray(candidate.availability_locations)
+                      ? candidate.availability_locations
+                      : JSON.parse(
+                          candidate.availability_locations as unknown as string,
+                        )
+                    ).join(", ")}
+                  </p>
+                </div>
+              )}
+              {candidate.availability_comments && (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    Comments
+                  </p>
+                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                    {candidate.availability_comments}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Declarations */}
           <Section title="Declarations">
             <InfoRow
