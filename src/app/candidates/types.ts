@@ -53,4 +53,11 @@ export interface Candidate {
   added_to_whatsapp_group: boolean;
   staff_notes: string | null;
   whitelisted: boolean;
+  home_address: string | null;
+  emergency_contact: string | null;
+  bank_details: string | null;
+  availability_dates: Record<string, string[]> | null;
+  availability_locations: Record<string, string[]> | null;
+  availability_comments: string | null;
+  forms_submitted: boolean;
 }
