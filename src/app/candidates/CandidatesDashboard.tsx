@@ -1015,8 +1015,8 @@ function CandidateModal({
 
           {/* Submitted Forms Info */}
           {(candidate.home_address ||
-            candidate.emergency_contact ||
-            candidate.bank_details ||
+            candidate.emergency_contact_name ||
+            candidate.bank_account_number ||
             candidate.availability_dates ||
             candidate.availability_locations ||
             candidate.availability_comments) && (
@@ -1031,11 +1031,23 @@ function CandidateModal({
                 />
                 <InfoRow
                   label="Emergency Contact"
-                  value={candidate.emergency_contact}
+                  value={candidate.emergency_contact_name}
+                />
+                <InfoRow
+                  label="Relationship"
+                  value={candidate.emergency_contact_relationship}
+                />
+                <InfoRow
+                  label="Emergency Phone"
+                  value={candidate.emergency_contact_phone}
                 />
                 <InfoRow
                   label="Bank Account Number"
-                  value={candidate.bank_details}
+                  value={candidate.bank_account_number}
+                />
+                <InfoRow
+                  label="Sort Code"
+                  value={candidate.bank_sort_code}
                 />
               </div>
               {candidate.availability_dates && (

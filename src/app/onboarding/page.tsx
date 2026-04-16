@@ -223,6 +223,22 @@ function CheckItem({
   );
 }
 
+// ─── Section divider ──────────────────────────────────────────────────────────
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <p
+        className="text-xs font-bold uppercase tracking-widest whitespace-nowrap"
+        style={{ color: `${B}99` }}
+      >
+        {children}
+      </p>
+      <div className="flex-1 h-px bg-[#2a2a2a]" />
+    </div>
+  );
+}
+
 // ─── Success ──────────────────────────────────────────────────────────────────
 
 function SuccessScreen() {
@@ -261,10 +277,18 @@ function OnboardingForm() {
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Tab 1
+  // Tab 1 — Personal
+  const [fullName, setFullName] = useState("");
   const [homeAddress, setHomeAddress] = useState("");
-  const [emergencyName, setEmergencyName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
+
+  // Tab 1 — Emergency contact
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyRelationship, setEmergencyRelationship] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
+
+  // Tab 1 — Bank
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankSortCode, setBankSortCode] = useState("");
 
   // Tab 2
   const [unavailableAll, setUnavailableAll] = useState(false);
@@ -283,11 +307,26 @@ function OnboardingForm() {
     );
   }
 
+  // Sort code: auto-format to XX-XX-XX, max 6 digits
+  function handleSortCode(raw: string) {
+    const digits = raw.replace(/\D/g, "").slice(0, 6);
+    const parts = digits.match(/.{1,2}/g) ?? [];
+    setBankSortCode(parts.join("-"));
+  }
+
   function handleNext() {
     const e: Record<string, string> = {};
     if (!homeAddress.trim()) e.homeAddress = "Required";
-    if (!emergencyName.trim()) e.emergencyName = "Required";
-    if (!accountNumber.trim()) e.accountNumber = "Required";
+    if (!emergencyContactName.trim()) e.emergencyContactName = "Required";
+    if (!emergencyRelationship.trim()) e.emergencyRelationship = "Required";
+    if (!emergencyPhone.trim()) e.emergencyPhone = "Required";
+    if (!bankAccountNumber.trim()) e.bankAccountNumber = "Required";
+    else if (bankAccountNumber.length !== 8)
+      e.bankAccountNumber = "Must be exactly 8 digits";
+    if (!bankSortCode.trim()) e.bankSortCode = "Required";
+    else if (bankSortCode.replace(/\D/g, "").length !== 6)
+      e.bankSortCode = "Must be exactly 6 digits";
+
     if (Object.keys(e).length > 0) {
       setErrors(e);
       return;
@@ -318,8 +357,11 @@ function OnboardingForm() {
           candidate_id: candidateId,
           onboarding: {
             home_address: homeAddress,
-            emergency_contact: emergencyName,
-            bank_details: accountNumber,
+            emergency_contact_name: emergencyContactName,
+            emergency_contact_relationship: emergencyRelationship,
+            emergency_contact_phone: emergencyPhone,
+            bank_account_number: bankAccountNumber,
+            bank_sort_code: bankSortCode,
           },
           availability: {
             month: CURRENT_MONTH,
@@ -401,6 +443,8 @@ function OnboardingForm() {
             {/* ── Tab 1 ── */}
             {tab === "onboarding" && (
               <>
+                {/* Personal */}
+                <SectionTitle>Personal</SectionTitle>
                 <div>
                   <FieldLabel required>Home Address</FieldLabel>
                   <Textarea
@@ -411,25 +455,69 @@ function OnboardingForm() {
                   <FieldError message={errors.homeAddress} />
                 </div>
 
+                {/* Emergency Contact */}
+                <SectionTitle>Emergency Contact</SectionTitle>
+
                 <div>
-                  <FieldLabel required>Emergency Contact Name</FieldLabel>
+                  <FieldLabel required>Contact Name</FieldLabel>
                   <Input
-                    value={emergencyName}
-                    onChange={setEmergencyName}
+                    value={emergencyContactName}
+                    onChange={setEmergencyContactName}
                     placeholder="Jane Smith"
                   />
-                  <FieldError message={errors.emergencyName} />
+                  <FieldError message={errors.emergencyContactName} />
                 </div>
 
                 <div>
-                  <FieldLabel required>Bank Account Number</FieldLabel>
+                  <FieldLabel required>Relationship</FieldLabel>
                   <Input
-                    value={accountNumber}
-                    onChange={setAccountNumber}
-                    placeholder="12345678"
-                    type="number"
+                    value={emergencyRelationship}
+                    onChange={setEmergencyRelationship}
+                    placeholder="e.g. Mother, Partner, Sibling"
                   />
-                  <FieldError message={errors.accountNumber} />
+                  <FieldError message={errors.emergencyRelationship} />
+                </div>
+
+                <div>
+                  <FieldLabel required>Phone Number</FieldLabel>
+                  <Input
+                    value={emergencyPhone}
+                    onChange={setEmergencyPhone}
+                    placeholder="07700 900123"
+                    type="tel"
+                  />
+                  <FieldError message={errors.emergencyPhone} />
+                </div>
+
+                {/* Bank Details */}
+                <SectionTitle>Bank Details</SectionTitle>
+
+                <div>
+                  <FieldLabel required>Account Number</FieldLabel>
+                  <Input
+                    value={bankAccountNumber}
+                    onChange={(v) =>
+                      setBankAccountNumber(v.replace(/\D/g, "").slice(0, 8))
+                    }
+                    placeholder="12345678"
+                    type="tel"
+                  />
+                  <p className="mt-1 text-xs text-gray-600">
+                    {bankAccountNumber.length} / 8 digits
+                  </p>
+                  <FieldError message={errors.bankAccountNumber} />
+                </div>
+
+                <div>
+                  <FieldLabel required>Sort Code</FieldLabel>
+                  <Input
+                    value={bankSortCode}
+                    onChange={handleSortCode}
+                    placeholder="12-34-56"
+                    type="tel"
+                  />
+                  <p className="mt-1 text-xs text-gray-600">Format: XX-XX-XX</p>
+                  <FieldError message={errors.bankSortCode} />
                 </div>
               </>
             )}

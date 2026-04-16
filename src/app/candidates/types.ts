@@ -54,8 +54,11 @@ export interface Candidate {
   staff_notes: string | null;
   whitelisted: boolean;
   home_address: string | null;
-  emergency_contact: string | null;
-  bank_details: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_relationship: string | null;
+  emergency_contact_phone: string | null;
+  bank_account_number: string | null;
+  bank_sort_code: string | null;
   availability_dates: Record<string, string[]> | null;
   availability_locations: Record<string, string[]> | null;
   availability_comments: string | null;
