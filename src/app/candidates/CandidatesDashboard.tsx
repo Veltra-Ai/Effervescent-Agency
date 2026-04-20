@@ -1365,6 +1365,41 @@ export function CandidatesDashboard({
       return;
     }
     handleStatusChange(candidate.id, result.patch as Partial<Candidate>);
+
+    if (newStatus === "approved") {
+      fetch("https://n8n.veltraai.net/webhook/candidate-approved", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: candidate.full_name,
+          phone: candidate.phone,
+          email: candidate.email,
+          candidate_id: candidate.id,
+        }),
+      });
+    }
+
+    if (newStatus === "onboarding") {
+      fetch("https://n8n.veltraai.net/webhook/successful_trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: candidate.full_name,
+          phone: candidate.phone,
+          candidate_id: candidate.id,
+        }),
+      });
+      fetch("https://n8n.veltraai.net/webhook/send-Docusign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: candidate.full_name,
+          phone: candidate.phone,
+          email: candidate.email,
+          candidate_id: candidate.id,
+        }),
+      });
+    }
   }
 
   async function handlePendingRejectConfirm(reason: string) {
