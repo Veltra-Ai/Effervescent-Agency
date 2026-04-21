@@ -104,7 +104,10 @@ export async function changeStatus(
 
   if (to === "trial_offered") patch.trial_offered_at = now;
   if (to === "onboarding") patch.trial_success = true;
-  if (to === "on-boarded") patch.onboarded_at = now;
+  if (to === "on-boarded") {
+    patch.onboarded_at = now;
+    patch.whitelisted = true;
+  }
   if (to === "rejected" && (from === "trial_offered" || from === "onboarding"))
     patch.trial_success = false;
 
