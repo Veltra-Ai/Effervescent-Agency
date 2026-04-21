@@ -400,6 +400,7 @@ function CandidateModal({
         onStatusChange(candidate.id, {
           status: "on-boarded",
           onboarded_at: now,
+          whitelisted: true,
         });
       }
       setActiveAction(null);
