@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import Image from "next/image";
+import { toggleWhitelist } from "@/app/whitelist/actions";
 import { createPortal } from "react-dom";
 import {
   X,
@@ -637,16 +638,38 @@ function CandidateModal({
           )}
 
           {candidate.status === "on-boarded" && (
-            <div className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <Award className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm font-semibold text-emerald-400">
-                Onboarded
-              </span>
-              {candidate.onboarded_at && (
-                <span className="text-xs text-emerald-600 ml-1">
-                  since {formatDate(candidate.onboarded_at)}
+            <div className="flex items-center justify-between py-2.5 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-semibold text-emerald-400">
+                  Onboarded
                 </span>
-              )}
+                {candidate.onboarded_at && (
+                  <span className="text-xs text-emerald-600 ml-1">
+                    since {formatDate(candidate.onboarded_at)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  {candidate.whitelisted ? "Whitelisted" : "Not Whitelisted"}
+                </span>
+                <button
+                  onClick={async () => {
+                    const newVal = !candidate.whitelisted;
+                    const result = await toggleWhitelist(candidate.id, newVal);
+                    if (!result.error)
+                      onStatusChange(candidate.id, { whitelisted: newVal });
+                  }}
+                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0
+          ${candidate.whitelisted ? "bg-emerald-500" : "bg-[#2a2a2a]"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200
+            ${candidate.whitelisted ? "translate-x-6" : "translate-x-0"}`}
+                  />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1546,12 +1569,6 @@ export function CandidatesDashboard({
               className="px-4 py-1.5 text-sm text-gray-300 border border-white/10 rounded-lg bg-white/5 hover:border-[#FDB8D7]/50 hover:text-[#FDB8D7] hover:bg-[#FDB8D7]/5 transition-all duration-200 tracking-wide"
             >
               Apply Form
-            </Link>
-            <Link
-              href="/whitelist"
-              className="px-4 py-1.5 text-sm text-gray-300 border border-white/10 rounded-lg bg-white/5 hover:border-[#FDB8D7]/50 hover:text-[#FDB8D7] hover:bg-[#FDB8D7]/5 transition-all duration-200 tracking-wide"
-            >
-              Whitelist
             </Link>
           </div>
         </div>
