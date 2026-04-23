@@ -1262,7 +1262,7 @@ function InlineStatusDropdown({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [dropRect, setDropRect] = useState<DOMRect | null>(null);
 
-  const transitions = STATUS_TRANSITIONS[candidate.status];
+  const transitions = STATUS_TRANSITIONS[candidate.status] ?? [];
   if (transitions.length === 0)
     return <StatusBadge status={candidate.status} />;
 
