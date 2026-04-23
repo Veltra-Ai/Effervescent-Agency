@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Check,
@@ -10,13 +10,44 @@ import {
   AlertCircle,
   Calendar,
   User,
+  Package,
+  Smartphone,
+  ExternalLink,
 } from "lucide-react";
 
 const B = "#FDB8D7";
 const WEBHOOK_URL =
   "https://n8n.veltraai.net/webhook/Onboarding_Availability_form_submitted";
 
-// ─── Dynamic dates ────────────────────────────────────────────────────────────
+// ─── TYPES ────────────────────────────────────────────────────────────────────
+
+interface FieldProps {
+  children: React.ReactNode;
+  required?: boolean;
+}
+
+interface InputProps {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}
+
+interface CheckItemProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}
+
+interface MonthSectionProps {
+  label: string;
+  dates: string[];
+  selectedDates: string[];
+  onToggle: (d: string) => void;
+  defaultOpen?: boolean;
+}
+
+// ─── DYNAMIC DATES ────────────────────────────────────────────────────────────
 
 function getOrdinalSuffix(d: number) {
   if (d === 1 || d === 21 || d === 31) return "st";
@@ -43,10 +74,8 @@ const now = new Date();
 const CY = now.getFullYear();
 const CM = now.getMonth();
 const CD = now.getDate();
-
 const NY = CM === 11 ? CY + 1 : CY;
 const NM = CM === 11 ? 0 : CM + 1;
-
 const CURRENT_MONTH_LABEL = now.toLocaleString("en-GB", {
   month: "long",
   year: "numeric",
@@ -55,8 +84,6 @@ const NEXT_MONTH_LABEL = new Date(NY, NM, 1).toLocaleString("en-GB", {
   month: "long",
   year: "numeric",
 });
-
-// Current month: from today onwards; Next month: full month
 const CURRENT_DATES = buildDates(CY, CM, CD);
 const NEXT_DATES = buildDates(NY, NM, 1);
 const SHOW_NEXT_MONTH = CD >= 16;
@@ -98,7 +125,7 @@ const LOCATIONS = [
   "Wolverhampton",
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── UI PRIMITIVES ────────────────────────────────────────────────────────────
 
 const onFocus = (
   e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -113,15 +140,7 @@ const onBlur = (
   e.currentTarget.style.borderColor = "";
 };
 
-// ─── UI Primitives ────────────────────────────────────────────────────────────
-
-function FieldLabel({
-  children,
-  required,
-}: {
-  children: React.ReactNode;
-  required?: boolean;
-}) {
+function FieldLabel({ children, required }: FieldProps) {
   return (
     <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
       {children}
@@ -146,17 +165,7 @@ function FieldError({ message }: { message?: string }) {
   );
 }
 
-function Input({
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
+function Input({ value, onChange, placeholder, type = "text" }: InputProps) {
   return (
     <input
       type={type}
@@ -165,24 +174,13 @@ function Input({
       onFocus={onFocus}
       onBlur={onBlur}
       placeholder={placeholder}
-      style={{ colorScheme: "dark" }}
-      className="w-full px-3 py-2.5 border border-[#2a2a2a] rounded-xl text-sm
-        bg-[#1a1a1a] text-white placeholder:text-gray-600 focus:outline-none transition-all"
+      style={{ colorScheme: "dark" } as React.CSSProperties}
+      className="w-full px-3 py-2.5 border border-[#2a2a2a] rounded-xl text-sm bg-[#1a1a1a] text-white placeholder:text-gray-600 focus:outline-none transition-all"
     />
   );
 }
 
-function Textarea({
-  value,
-  onChange,
-  placeholder,
-  rows = 3,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  rows?: number;
-}) {
+function Textarea({ value, onChange, placeholder, rows = 3 }: any) {
   return (
     <textarea
       value={value}
@@ -191,21 +189,12 @@ function Textarea({
       onBlur={onBlur}
       rows={rows}
       placeholder={placeholder}
-      className="w-full px-3 py-2.5 border border-[#2a2a2a] rounded-xl text-sm
-        bg-[#1a1a1a] text-white placeholder:text-gray-600 focus:outline-none resize-none transition-all"
+      className="w-full px-3 py-2.5 border border-[#2a2a2a] rounded-xl text-sm bg-[#1a1a1a] text-white placeholder:text-gray-600 focus:outline-none resize-none transition-all"
     />
   );
 }
 
-function CheckItem({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
+function CheckItem({ checked, onChange, label }: CheckItemProps) {
   return (
     <button
       type="button"
@@ -237,27 +226,17 @@ function CheckItem({
   );
 }
 
-// ─── Collapsible month section ────────────────────────────────────────────────
-
 function MonthSection({
   label,
   dates,
   selectedDates,
   onToggle,
   defaultOpen = false,
-}: {
-  label: string;
-  dates: string[];
-  selectedDates: string[];
-  onToggle: (d: string) => void;
-  defaultOpen?: boolean;
-}) {
+}: MonthSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const selectedCount = dates.filter((d) => selectedDates.includes(d)).length;
-
   return (
-    <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden">
-      {/* Header */}
+    <div className="border border-[#2a2a2a] rounded-2xl overflow-hidden mb-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -283,8 +262,6 @@ function MonthSection({
           style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
-
-      {/* Date list */}
       {open && (
         <div className="px-3 pb-3 pt-2 space-y-1.5 bg-[#111111]">
           {dates.map((d) => (
@@ -301,8 +278,6 @@ function MonthSection({
   );
 }
 
-// ─── Section divider ──────────────────────────────────────────────────────────
-
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 py-1">
@@ -316,8 +291,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-// ─── Success ──────────────────────────────────────────────────────────────────
 
 function SuccessScreen() {
   return (
@@ -343,31 +316,26 @@ function SuccessScreen() {
   );
 }
 
-// ─── Main Form ────────────────────────────────────────────────────────────────
+// ─── MAIN FORM ────────────────────────────────────────────────────────────────
 
 function OnboardingForm() {
   const searchParams = useSearchParams();
   const candidateId = searchParams.get("id") ?? "";
 
+  const [showForm, setShowForm] = useState(false);
   const [tab, setTab] = useState<"onboarding" | "availability">("onboarding");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Tab 1 — Personal
   const [homeAddress, setHomeAddress] = useState("");
-
-  // Tab 1 — Emergency contact
   const [emergencyContactName, setEmergencyContactName] = useState("");
   const [emergencyRelationship, setEmergencyRelationship] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
-
-  // Tab 1 — Bank
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [bankSortCode, setBankSortCode] = useState("");
-
-  // Tab 2
   const [unavailableAll, setUnavailableAll] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -396,12 +364,10 @@ function OnboardingForm() {
     if (!emergencyContactName.trim()) e.emergencyContactName = "Required";
     if (!emergencyRelationship.trim()) e.emergencyRelationship = "Required";
     if (!emergencyPhone.trim()) e.emergencyPhone = "Required";
-    if (!bankAccountNumber.trim()) e.bankAccountNumber = "Required";
-    else if (bankAccountNumber.length !== 8)
-      e.bankAccountNumber = "Must be exactly 8 digits";
-    if (!bankSortCode.trim()) e.bankSortCode = "Required";
-    else if (bankSortCode.replace(/\D/g, "").length !== 6)
-      e.bankSortCode = "Must be exactly 6 digits";
+    if (bankAccountNumber.length !== 8)
+      e.bankAccountNumber = "Must be 8 digits";
+    if (bankSortCode.replace(/\D/g, "").length !== 6)
+      e.bankSortCode = "Must be 6 digits";
 
     if (Object.keys(e).length > 0) {
       setErrors(e);
@@ -415,14 +381,14 @@ function OnboardingForm() {
   async function handleSubmit() {
     const e: Record<string, string> = {};
     if (!unavailableAll && selectedDates.length === 0)
-      e.dates = "Select at least one date or mark unavailable all month";
+      e.dates = "Select dates or mark unavailable";
     if (selectedLocations.length === 0)
       e.locations = "Select at least one location";
     if (Object.keys(e).length > 0) {
       setErrors(e);
       return;
     }
-    setErrors({});
+
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -449,7 +415,8 @@ function OnboardingForm() {
       });
       if (!res.ok) throw new Error();
       setSubmitted(true);
-    } catch {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
       setSubmitError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
@@ -458,10 +425,101 @@ function OnboardingForm() {
 
   if (submitted) return <SuccessScreen />;
 
+  if (!showForm) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white py-12 px-6">
+        <div className="max-w-xl mx-auto">
+          <header className="mb-10">
+            <h1
+              className="text-4xl font-black italic tracking-tighter leading-none mb-4"
+              style={{ color: B }}
+            >
+              OFFER & NEXT STEPS
+            </h1>
+            <p className="text-gray-300 leading-relaxed">
+              Thank you for attending a trial shift with us this weekend - we
+              were really pleased and would like to offer you the opportunity to
+              work with us.
+            </p>
+          </header>
+
+          <div className="space-y-6">
+            <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl">
+              <div className="flex items-center gap-2 text-red-400 mb-2 font-bold text-xs uppercase tracking-widest">
+                <AlertCircle className="w-4 h-4" /> Right to Work
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                You must have the valid right to work as a self-employed
+                individual in the UK. If you DO NOT have a British passport,
+                please let us know immediately.
+              </p>
+            </div>
+
+            <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+              <h2 className="flex items-center gap-2 font-bold mb-4 text-white uppercase text-sm tracking-widest">
+                <Package className="w-5 h-5 text-[#FDB8D7]" /> 📦 Equipment
+              </h2>
+              <ul className="text-sm text-gray-400 space-y-2 mb-6">
+                <li>• 25ml Jägerbomb cups (at least 100)</li>
+                <li>• Shot tubes with rack (approved suppliers)</li>
+                <li>• Tray (recommended)</li>
+              </ul>
+              <a
+                href="https://effervescent-agency.sumupstore.com/product/shot-seller-starter-kit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all"
+              >
+                <span className="text-xs font-bold uppercase tracking-widest text-[#FDB8D7]">
+                  Get Starter Kit
+                </span>
+                <ExternalLink className="w-4 h-4 text-gray-600" />
+              </a>
+            </section>
+
+            <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+              <h2 className="flex items-center gap-2 font-bold mb-4 text-white uppercase text-sm tracking-widest">
+                <Smartphone className="w-5 h-5 text-[#FDB8D7]" /> 📲 What
+                Happens Next
+              </h2>
+              <div className="text-xs text-gray-500 space-y-3 leading-relaxed">
+                <p>
+                  • You will receive an invitation to join{" "}
+                  <strong>RotaCloud</strong>.
+                </p>
+                <p>
+                  • You will be sent a <strong>contract via email</strong> to
+                  review and e-sign.
+                </p>
+                <p>
+                  • You will be added to our <strong>WhatsApp group</strong>.
+                </p>
+                <p>
+                  • Mandatory <strong>e-learning modules</strong> will be sent
+                  to you.
+                </p>
+              </div>
+            </section>
+
+            <button
+              onClick={() => {
+                setShowForm(true);
+                window.scrollTo(0, 0);
+              }}
+              className="w-full py-5 rounded-2xl font-black text-black flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_20px_40px_-15px_#FDB8D744]"
+              style={{ background: B }}
+            >
+              ACCEPT & START FORMS <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <div className="max-w-xl mx-auto px-4 py-8">
-        {/* Tabs */}
         <div className="flex gap-2 mb-5 bg-[#111111] border border-[#1f1f1f] rounded-2xl p-1.5">
           {(["onboarding", "availability"] as const).map((t) => (
             <button
@@ -481,19 +539,11 @@ function OnboardingForm() {
                   <Calendar className="w-4 h-4" /> Availability
                 </>
               )}
-              {t === "onboarding" && tab === "availability" && (
-                <Check
-                  className="w-3.5 h-3.5"
-                  strokeWidth={3}
-                />
-              )}
             </button>
           ))}
         </div>
 
-        {/* Card */}
         <div className="bg-[#111111] border border-[#1f1f1f] rounded-3xl overflow-hidden shadow-2xl">
-          {/* Header */}
           <div
             className="px-6 py-5"
             style={{ background: "linear-gradient(135deg, #2a0d1c, #3d1228)" }}
@@ -513,8 +563,7 @@ function OnboardingForm() {
           </div>
 
           <div className="px-6 py-6 space-y-5">
-            {/* ── Tab 1 ── */}
-            {tab === "onboarding" && (
+            {tab === "onboarding" ? (
               <>
                 <SectionTitle>Personal</SectionTitle>
                 <div>
@@ -522,209 +571,127 @@ function OnboardingForm() {
                   <Textarea
                     value={homeAddress}
                     onChange={setHomeAddress}
-                    placeholder="123 Example Street, City, Postcode"
+                    placeholder="Address, Postcode"
                   />
                   <FieldError message={errors.homeAddress} />
                 </div>
-
                 <SectionTitle>Emergency Contact</SectionTitle>
-
                 <div>
-                  <FieldLabel required>Contact Name</FieldLabel>
+                  <FieldLabel required>Name</FieldLabel>
                   <Input
                     value={emergencyContactName}
                     onChange={setEmergencyContactName}
-                    placeholder="Jane Smith"
                   />
                   <FieldError message={errors.emergencyContactName} />
                 </div>
-
-                <div>
-                  <FieldLabel required>Relationship</FieldLabel>
-                  <Input
-                    value={emergencyRelationship}
-                    onChange={setEmergencyRelationship}
-                    placeholder="e.g. Mother, Partner, Sibling"
-                  />
-                  <FieldError message={errors.emergencyRelationship} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel required>Relationship</FieldLabel>
+                    <Input
+                      value={emergencyRelationship}
+                      onChange={setEmergencyRelationship}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel required>Phone</FieldLabel>
+                    <Input
+                      value={emergencyPhone}
+                      onChange={setEmergencyPhone}
+                      type="tel"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <FieldLabel required>Phone Number</FieldLabel>
-                  <Input
-                    value={emergencyPhone}
-                    onChange={setEmergencyPhone}
-                    placeholder="07700 900123"
-                    type="tel"
-                  />
-                  <FieldError message={errors.emergencyPhone} />
-                </div>
-
                 <SectionTitle>Bank Details</SectionTitle>
-
-                <div>
-                  <FieldLabel required>Account Number</FieldLabel>
-                  <Input
-                    value={bankAccountNumber}
-                    onChange={(v) =>
-                      setBankAccountNumber(v.replace(/\D/g, "").slice(0, 8))
-                    }
-                    placeholder="12345678"
-                    type="tel"
-                  />
-                  <p className="mt-1 text-xs text-gray-600">
-                    {bankAccountNumber.length} / 8 digits
-                  </p>
-                  <FieldError message={errors.bankAccountNumber} />
-                </div>
-
-                <div>
-                  <FieldLabel required>Sort Code</FieldLabel>
-                  <Input
-                    value={bankSortCode}
-                    onChange={handleSortCode}
-                    placeholder="12-34-56"
-                    type="tel"
-                  />
-                  <p className="mt-1 text-xs text-gray-600">Format: XX-XX-XX</p>
-                  <FieldError message={errors.bankSortCode} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel required>Account No.</FieldLabel>
+                    <Input
+                      value={bankAccountNumber}
+                      onChange={(v) =>
+                        setBankAccountNumber(v.replace(/\D/g, "").slice(0, 8))
+                      }
+                    />
+                    <FieldError message={errors.bankAccountNumber} />
+                  </div>
+                  <div>
+                    <FieldLabel required>Sort Code</FieldLabel>
+                    <Input
+                      value={bankSortCode}
+                      onChange={handleSortCode}
+                    />
+                    <FieldError message={errors.bankSortCode} />
+                  </div>
                 </div>
               </>
-            )}
-
-            {/* ── Tab 2 ── */}
-            {tab === "availability" && (
+            ) : (
               <>
-                {/* Unavailable all month toggle — above both month sections */}
-                <div>
-                  <FieldLabel required>Dates Available</FieldLabel>
-                  <FieldError message={errors.dates} />
-                  <div className="space-y-3 mt-2">
-                    <CheckItem
-                      checked={unavailableAll}
-                      onChange={(v) => {
-                        setUnavailableAll(v);
-                        if (v) setSelectedDates([]);
-                      }}
-                      label="Unavailable All Month"
+                <FieldLabel required>Dates Available</FieldLabel>
+                <FieldError message={errors.dates} />
+                <CheckItem
+                  checked={unavailableAll}
+                  onChange={(v) => {
+                    setUnavailableAll(v);
+                    if (v) setSelectedDates([]);
+                  }}
+                  label="Unavailable All Month"
+                />
+                {!unavailableAll && (
+                  <>
+                    <MonthSection
+                      label={CURRENT_MONTH_LABEL}
+                      dates={CURRENT_DATES}
+                      selectedDates={selectedDates}
+                      onToggle={toggleDate}
                     />
-
-                    {!unavailableAll && (
-                      <>
-                        <MonthSection
-                          label={CURRENT_MONTH_LABEL}
-                          dates={CURRENT_DATES}
-                          selectedDates={selectedDates}
-                          onToggle={toggleDate}
-                          defaultOpen={false}
-                        />
-                        {SHOW_NEXT_MONTH && (
-                          <MonthSection
-                            label={NEXT_MONTH_LABEL}
-                            dates={NEXT_DATES}
-                            selectedDates={selectedDates}
-                            onToggle={toggleDate}
-                            defaultOpen={false}
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <FieldLabel required>Locations Available</FieldLabel>
-                  <FieldError message={errors.locations} />
-                  <div className="space-y-1.5 mt-2">
-                    {LOCATIONS.map((l) => (
-                      <CheckItem
-                        key={l}
-                        checked={selectedLocations.includes(l)}
-                        onChange={() => toggleLocation(l)}
-                        label={l}
+                    {SHOW_NEXT_MONTH && (
+                      <MonthSection
+                        label={NEXT_MONTH_LABEL}
+                        dates={NEXT_DATES}
+                        selectedDates={selectedDates}
+                        onToggle={toggleDate}
                       />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <FieldLabel>Comments</FieldLabel>
-                  <Textarea
-                    value={comments}
-                    onChange={setComments}
-                    placeholder="Anything else we should know…"
-                  />
-                </div>
-
-                {submitError && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                    <p className="text-sm text-red-400">{submitError}</p>
-                  </div>
+                    )}
+                  </>
                 )}
+                <SectionTitle>Locations</SectionTitle>
+                <FieldError message={errors.locations} />
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                  {LOCATIONS.map((l) => (
+                    <CheckItem
+                      key={l}
+                      checked={selectedLocations.includes(l)}
+                      onChange={() => toggleLocation(l)}
+                      label={l}
+                    />
+                  ))}
+                </div>
               </>
             )}
           </div>
 
-          {/* Footer */}
           <div className="px-6 py-4 border-t border-[#1a1a1a] flex justify-between items-center">
-            {tab === "availability" ? (
+            {tab === "availability" && (
               <button
-                onClick={() => {
-                  setTab("onboarding");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-[#2a2a2a] text-gray-400 bg-[#141414] hover:border-[#FDB8D7]/50 hover:text-gray-200 transition-all"
+                onClick={() => setTab("onboarding")}
+                className="text-gray-500 text-sm font-bold flex items-center gap-1"
               >
                 <ChevronLeft className="w-4 h-4" /> Back
               </button>
-            ) : (
-              <div />
             )}
-
-            {tab === "onboarding" ? (
-              <button
-                onClick={handleNext}
-                style={{
-                  background: `linear-gradient(135deg, ${B}, #e89fbe)`,
-                  color: "#1a0a10",
-                }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:opacity-90 transition-all"
-              >
-                Next <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{
-                  background: `linear-gradient(135deg, ${B}, #e89fbe)`,
-                  color: "#1a0a10",
-                }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg disabled:opacity-50 hover:opacity-90 transition-all"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-[#1a0a10]/30 border-t-[#1a0a10] rounded-full animate-spin" />{" "}
-                    Submitting…
-                  </>
-                ) : (
-                  <>
-                    Submit{" "}
-                    <Check
-                      className="w-4 h-4"
-                      strokeWidth={3}
-                    />
-                  </>
-                )}
-              </button>
-            )}
+            <button
+              onClick={tab === "onboarding" ? handleNext : handleSubmit}
+              disabled={submitting}
+              className="ml-auto px-8 py-3 rounded-xl font-bold text-black disabled:opacity-50"
+              style={{ background: B }}
+            >
+              {submitting
+                ? "Submitting..."
+                : tab === "onboarding"
+                  ? "Next"
+                  : "Submit"}
+            </button>
           </div>
         </div>
-
-        <p className="text-center text-xs text-gray-700 mt-4 pb-4">
-          Your information is handled securely.
-        </p>
       </div>
     </div>
   );
