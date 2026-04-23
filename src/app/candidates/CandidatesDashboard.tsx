@@ -69,8 +69,9 @@ const STATUS_LABEL: Record<Candidate["status"], string> = {
 const STATUS_TRANSITIONS: Record<Candidate["status"], Candidate["status"][]> = {
   pending: ["approved", "rejected"],
   approved: ["interview booked", "rejected"],
+  "interview booked": ["trial_offered", "rejected", "interview rejected"],
+  "interview rejected": ["pending"],
   "rejected - non responsive": ["pending"],
-  "interview booked": ["trial_offered", "rejected"],
   trial_offered: ["onboarding", "rejected"],
   onboarding: ["on-boarded", "rejected"],
   "on-boarded": [],
