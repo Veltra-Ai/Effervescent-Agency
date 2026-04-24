@@ -157,9 +157,10 @@ export default function SalesTrackerPage() {
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: { ...form, ...computed } }),
+        body: JSON.stringify({ ...form, ...computed }),
       });
       if (res.ok) setSubmitted(true);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       alert("Submission failed.");
     } finally {
