@@ -102,16 +102,29 @@ export default function SalesTrackerPage() {
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setForm((prev) => ({ ...prev, images: [...prev.images, base64] }));
-      };
-      reader.readAsDataURL(file);
+
+    // Optional: Limit to 2 images as discussed
+    if (form.images.length + files.length > 2) {
+      alert("Max 2 images allowed");
+      return;
+    }
+
+    const newImagesPromises = files.map((file) => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    // Wait for ALL images to finish reading, then update state ONCE
+    Promise.all(newImagesPromises).then((base64Strings) => {
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...base64Strings],
+      }));
     });
   };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
