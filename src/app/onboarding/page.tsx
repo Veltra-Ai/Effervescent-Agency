@@ -343,6 +343,7 @@ function OnboardingForm() {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [comments, setComments] = useState("");
+  const [unavailableReason, setUnavailableReason] = useState("");
 
   function toggleDate(d: string) {
     setSelectedDates((p) =>
@@ -385,6 +386,8 @@ function OnboardingForm() {
     const e: Record<string, string> = {};
     if (!unavailableAll && selectedDates.length === 0)
       e.dates = "Select dates or mark unavailable";
+    if (unavailableAll && !unavailableReason.trim())
+      e.unavailableReason = "Please provide a reason";
     if (selectedLocations.length === 0)
       e.locations = "Select at least one location";
     if (Object.keys(e).length > 0) {
@@ -410,6 +413,7 @@ function OnboardingForm() {
           },
           availability: {
             unavailable_all_month: unavailableAll,
+            unavailable_reason: unavailableAll ? unavailableReason : "",
             dates: unavailableAll ? [] : selectedDates,
             locations: selectedLocations,
             comments,
@@ -644,6 +648,17 @@ function OnboardingForm() {
                   }}
                   label="Unavailable All Month"
                 />
+                {unavailableAll && (
+                  <div className="mt-3">
+                    <FieldLabel required>Reason</FieldLabel>
+                    <Textarea
+                      value={unavailableReason}
+                      onChange={setUnavailableReason}
+                      placeholder="Enter reason..."
+                    />
+                    <FieldError message={errors.unavailableReason} />
+                  </div>
+                )}
                 {!unavailableAll && (
                   <>
                     <MonthSection
