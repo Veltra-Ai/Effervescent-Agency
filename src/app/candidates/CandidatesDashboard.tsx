@@ -1110,21 +1110,50 @@ function CandidateModal({
                   value={candidate.bank_sort_code}
                 />
               </div>
-              {candidate.availability_dates && (
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Dates Available
-                  </p>
-                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
-                    {(Array.isArray(candidate.availability_dates)
-                      ? candidate.availability_dates
-                      : JSON.parse(
+              {candidate.availability_dates &&
+              Array.isArray(candidate.availability_dates)
+                ? candidate.availability_dates.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        Dates Available
+                      </p>
+                      <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                        {candidate.availability_dates.join(", ")}
+                      </p>
+                    </div>
+                  )
+                : candidate.availability_dates &&
+                  JSON.parse(candidate.availability_dates as unknown as string)
+                    .length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        Dates Available
+                      </p>
+                      <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                        {JSON.parse(
                           candidate.availability_dates as unknown as string,
-                        )
-                    ).join(", ")}
-                  </p>
-                </div>
-              )}
+                        ).join(", ")}
+                      </p>
+                    </div>
+                  )}
+
+              {/* 👇 THIS is your requested block */}
+              {(!candidate.availability_dates ||
+                (Array.isArray(candidate.availability_dates)
+                  ? candidate.availability_dates.length === 0
+                  : JSON.parse(
+                      candidate.availability_dates as unknown as string,
+                    ).length === 0)) &&
+                candidate.unavailable_reason && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      This candidate is unavailable because:
+                    </p>
+                    <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                      {candidate.unavailable_reason}
+                    </p>
+                  </div>
+                )}
               {candidate.availability_locations && (
                 <div>
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">

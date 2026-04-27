@@ -65,4 +65,5 @@ export interface Candidate {
   availability_locations: Record<string, string[]> | null;
   availability_comments: string | null;
   forms_submitted: boolean;
+  unavailable_reason: string | null;
 }
