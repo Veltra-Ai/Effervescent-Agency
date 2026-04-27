@@ -449,12 +449,15 @@ function OnboardingForm() {
           <div className="space-y-6">
             <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl">
               <div className="flex items-center gap-2 text-red-400 mb-2 font-bold text-xs uppercase tracking-widest">
-                <AlertCircle className="w-4 h-4" /> Right to Work
+                <AlertCircle className="w-4 h-4" /> CONTRACTUAL STATUS
               </div>
               <p className="text-xs text-gray-400 leading-relaxed">
-                You must have the valid right to work as a self-employed
-                individual in the UK. If you DO NOT have a British passport,
-                please let us know immediately.
+                All Effervescent Agency team members are engaged as Independent
+                Contractors under a Contract for Services. By joining the
+                roster, you acknowledge that you are a self-employed individual
+                responsible for your own tax and National Insurance. There is no
+                contract of employment, expressed or implied, between you and
+                Effervescent Agency.
               </p>
             </div>
 
