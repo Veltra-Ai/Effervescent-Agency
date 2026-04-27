@@ -1568,7 +1568,7 @@ export function CandidatesDashboard({
                 style={{ boxShadow: "0 0 0 1px #FDB8D730" }}
               >
                 <Image
-                  src="/logo1.jpeg"
+                  src="/logo.jpeg"
                   alt="Effervescent Agency"
                   width={40}
                   height={40}

@@ -543,7 +543,7 @@ function SuccessScreen() {
           style={{ boxShadow: `0 0 0 2px ${B}40` }}
         >
           <Image
-            src="/logo1.jpeg"
+            src="/logo.jpeg"
             alt="Effervescent Agency"
             width={96}
             height={96}
