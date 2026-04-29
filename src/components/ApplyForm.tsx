@@ -1091,7 +1091,6 @@ export default function ApplyPage() {
                 </div>
               </>
             )}
-
             {/* ── Slide 3 ── */}
             {slide === 3 && (
               <>
@@ -1100,15 +1099,9 @@ export default function ApplyPage() {
                   <p className="text-xs text-gray-500 mb-2">
                     Upload 2 photos. JPG, PNG, or WEBP only. Max 10MB each.
                   </p>
-                  <div
-                    onClick={() => photosRef.current?.click()}
-                    className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center bg-[#141414] cursor-pointer transition-all"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = B;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "";
-                    }}
+                  <label
+                    htmlFor="photos-input"
+                    className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center bg-[#141414] cursor-pointer transition-all block"
                   >
                     <Upload
                       className="w-8 h-8 mx-auto mb-2"
@@ -1124,8 +1117,9 @@ export default function ApplyPage() {
                       {form.photos.length} / 2 uploaded
                       {form.photos.length < 2 && " (need at least 2)"}
                     </p>
-                  </div>
+                  </label>
                   <input
+                    id="photos-input"
                     ref={photosRef}
                     type="file"
                     accept=".jpg,.jpeg,.png,.webp"
@@ -1182,15 +1176,9 @@ export default function ApplyPage() {
                     </span>
                   </div>
                   {!form.passportId ? (
-                    <div
-                      onClick={() => idRef.current?.click()}
-                      className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center bg-[#141414] cursor-pointer transition-all"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = B;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "";
-                      }}
+                    <label
+                      htmlFor="id-input"
+                      className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center bg-[#141414] cursor-pointer transition-all block"
                     >
                       <Upload
                         className="w-8 h-8 mx-auto mb-2"
@@ -1205,7 +1193,7 @@ export default function ApplyPage() {
                       <p className="text-xs text-gray-600 mt-1">
                         JPG or PNG only — max 10MB
                       </p>
-                    </div>
+                    </label>
                   ) : (
                     <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-xl p-3 border border-[#2a2a2a]">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#222] flex-shrink-0">
@@ -1234,6 +1222,7 @@ export default function ApplyPage() {
                     </div>
                   )}
                   <input
+                    id="id-input"
                     ref={idRef}
                     type="file"
                     accept=".jpg,.jpeg,.png"
