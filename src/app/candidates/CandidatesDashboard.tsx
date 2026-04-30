@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import Image from "next/image";
 import { toggleWhitelist } from "@/app/whitelist/actions";
 import { createPortal } from "react-dom";
@@ -44,6 +44,8 @@ import {
   updateStaffNotes,
 } from "./actions";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { T } from "@/styles/theme";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,39 +81,83 @@ const STATUS_TRANSITIONS: Record<Candidate["status"], Candidate["status"][]> = {
   rejected: ["pending"],
 };
 
-function StatusBadge({ status }: { status: Candidate["status"] }) {
-  const map: Record<Candidate["status"], string> = {
-    pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25",
-    approved: "bg-green-500/15 text-green-400 border-green-500/25",
-    "interview booked": "bg-sky-500/15 text-sky-400 border-sky-500/25",
-    "interview rejected": "bg-red-500/15 text-red-400 border-red-500/25",
-    "rejected - non responsive":
-      "bg-orange-500/15 text-orange-400 border-orange-500/25",
-    rejected: "bg-red-500/15 text-red-400 border-red-500/25",
-    trial_offered: "bg-purple-500/15 text-purple-400 border-purple-500/25",
-    onboarding: "bg-blue-500/15 text-blue-400 border-blue-500/25",
-    "on-boarded": "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
-  };
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 
+function StatusBadge({ status }: { status: Candidate["status"] }) {
+  const styles: Record<
+    Candidate["status"],
+    { bg: string; text: string; border: string }
+  > = {
+    pending: {
+      bg: T.bg.badge.pending,
+      text: T.text.badge.pending,
+      border: T.border.badge.pending,
+    },
+    approved: {
+      bg: T.bg.badge.approved,
+      text: T.text.badge.approved,
+      border: T.border.badge.approved,
+    },
+    "interview booked": {
+      bg: T.bg.badge.interview,
+      text: T.text.badge.interview,
+      border: T.border.badge.interview,
+    },
+    "interview rejected": {
+      bg: T.bg.badge.rejected,
+      text: T.text.badge.rejected,
+      border: T.border.badge.rejected,
+    },
+    "rejected - non responsive": {
+      bg: T.bg.badge.orange,
+      text: T.text.badge.orange,
+      border: T.border.badge.orange,
+    },
+    rejected: {
+      bg: T.bg.badge.rejected,
+      text: T.text.badge.rejected,
+      border: T.border.badge.rejected,
+    },
+    trial_offered: {
+      bg: T.bg.badge.trial,
+      text: T.text.badge.trial,
+      border: T.border.badge.trial,
+    },
+    onboarding: {
+      bg: T.bg.badge.onboarding,
+      text: T.text.badge.onboarding,
+      border: T.border.badge.onboarding,
+    },
+    "on-boarded": {
+      bg: T.bg.badge.onboarded,
+      text: T.text.badge.onboarded,
+      border: T.border.badge.onboarded,
+    },
+  };
+  const s = styles[status];
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${map[status]}`}
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+      style={{ backgroundColor: s.bg, color: s.text, borderColor: s.border }}
     >
       {STATUS_LABEL[status]}
     </span>
   );
 }
+
+// ─── InfoRow ──────────────────────────────────────────────────────────────────
+
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   if (!value && value !== false && value !== 0) return null;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-        {label}
-      </span>
-      <span className="text-sm text-gray-200">{value}</span>
+      <span className={T.cls.infoLabel}>{label}</span>
+      <span className={T.cls.infoValue}>{value}</span>
     </div>
   );
 }
+
+// ─── Section ──────────────────────────────────────────────────────────────────
 
 function Section({
   title,
@@ -122,15 +168,13 @@ function Section({
 }) {
   return (
     <div className="space-y-3">
-      <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-        {title}
-      </h4>
+      <h4 className={T.cls.sectionHeader}>{title}</h4>
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">{children}</div>
     </div>
   );
 }
 
-// ─── Reject Reason Modal ───────────────────────────────────────────────────────
+// ─── Reject Reason Modal ──────────────────────────────────────────────────────
 
 const REJECT_REASONS = [
   "Unsuitable for role",
@@ -156,24 +200,47 @@ function RejectReasonModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        className={`${T.cls.backdrop} fixed inset-0`}
         onClick={onCancel}
       />
-      <div className="relative bg-[#111111] border border-[#2a2a2a] rounded-2xl w-full max-w-sm shadow-2xl p-6">
-        <h3 className="text-white font-semibold text-base mb-1">
+      <div
+        className="relative rounded-2xl w-full max-w-sm shadow-2xl p-6"
+        style={{
+          background: T.bg.modal,
+          border: `1px solid ${T.border.default}`,
+        }}
+      >
+        <h3
+          className="font-semibold text-base mb-1"
+          style={{ color: T.text.primary }}
+        >
           Reason for rejection
         </h3>
-        <p className="text-gray-500 text-xs mb-4">Select a reason</p>
+        <p
+          className="text-xs mb-4"
+          style={{ color: T.text.muted }}
+        >
+          Select a reason
+        </p>
         <div className="space-y-2 mb-5">
           {REJECT_REASONS.map((reason) => (
             <button
               key={reason}
               onClick={() => setSelected(reason)}
-              className={`w-full text-left px-3 py-2.5 rounded-xl text-sm border transition-all ${
+              className="w-full text-left px-3 py-2.5 rounded-xl text-sm border transition-all"
+              style={
                 selected === reason
-                  ? "bg-red-500/20 border-red-500/50 text-red-300"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20"
-              }`}
+                  ? {
+                      background: T.bg.badge.rejected,
+                      borderColor: T.border.badge.rejected,
+                      color: T.text.badge.rejected,
+                    }
+                  : {
+                      background: T.bg.surfaceAlt,
+                      borderColor: T.border.default,
+                      color: T.text.secondary,
+                    }
+              }
             >
               {reason}
             </button>
@@ -182,20 +249,18 @@ function RejectReasonModal({
         <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 rounded-xl text-sm font-medium border border-white/10 text-gray-400 hover:bg-white/5 transition-all"
+            className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all`}
+            style={{ borderColor: T.border.default, color: T.text.secondary }}
           >
             Cancel
           </button>
           <button
             onClick={() => selected && onConfirm(selected)}
             disabled={!selected || isPending}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold
-              bg-red-500/20 text-red-400 border border-red-500/30
-              hover:bg-red-500/30 hover:border-red-500/50
-              disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className={`flex-1 ${T.cls.btnDanger}`}
           >
             {isPending ? (
-              <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
             ) : (
               <XCircle className="w-4 h-4" />
             )}
@@ -207,7 +272,7 @@ function RejectReasonModal({
   );
 }
 
-// ─── Candidate Detail Modal ────────────────────────────────────────────────────
+// ─── Candidate Detail Modal ───────────────────────────────────────────────────
 
 function CandidateModal({
   candidate,
@@ -274,9 +339,7 @@ function CandidateModal({
     const result = await updateOnboardingChecklist(candidate.id, {
       [field]: value,
     });
-    if (!result.error) {
-      onStatusChange(candidate.id, { [field]: value });
-    }
+    if (!result.error) onStatusChange(candidate.id, { [field]: value });
   }
 
   async function handleSaveNotes() {
@@ -298,11 +361,8 @@ function CandidateModal({
     setActiveAction("approve");
     startTransition(async () => {
       const result = await approveCandidate(candidate);
-      if (result.error) {
-        setActionError(result.error);
-      } else {
-        onStatusChange(candidate.id, { status: "approved" });
-      }
+      if (result.error) setActionError(result.error);
+      else onStatusChange(candidate.id, { status: "approved" });
       setActiveAction(null);
     });
   }
@@ -319,9 +379,8 @@ function CandidateModal({
         },
         reason,
       );
-      if (result.error) {
-        setActionError(result.error);
-      } else {
+      if (result.error) setActionError(result.error);
+      else {
         setShowRejectModal(false);
         onStatusChange(candidate.id, {
           status: "rejected",
@@ -338,14 +397,12 @@ function CandidateModal({
     startTransition(async () => {
       const now = new Date().toISOString();
       const result = await markTrialOffered(candidate.id);
-      if (result.error) {
-        setActionError(result.error);
-      } else {
+      if (result.error) setActionError(result.error);
+      else
         onStatusChange(candidate.id, {
           status: "trial_offered",
           trial_offered_at: now,
         });
-      }
       setActiveAction(null);
     });
   }
@@ -396,15 +453,13 @@ function CandidateModal({
         "onboarding",
         "on-boarded",
       );
-      if (result.error) {
-        setActionError(result.error as string);
-      } else {
+      if (result.error) setActionError(result.error as string);
+      else
         onStatusChange(candidate.id, {
           status: "on-boarded",
           onboarded_at: now,
           whitelisted: true,
         });
-      }
       setActiveAction(null);
     });
   }
@@ -414,72 +469,106 @@ function CandidateModal({
     setActiveAction("trial_fail");
     startTransition(async () => {
       const result = await markTrialFailed(candidate.id);
-      if (result.error) {
-        setActionError(result.error);
-      } else {
+      if (result.error) setActionError(result.error);
+      else
         onStatusChange(candidate.id, {
           status: "rejected",
           trial_success: false,
         });
-      }
       setActiveAction(null);
     });
   }
 
+  const spinnerPink = (
+    <div className="w-4 h-4 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+        className={`${T.cls.backdrop} fixed inset-0`}
         onClick={onClose}
       />
 
-      {/* Panel */}
-      <div className="relative bg-[#111111] border border-[#1f1f1f] rounded-3xl w-full max-w-2xl my-4 shadow-2xl">
-        {/* Header */}
-        <div className="rounded-t-3xl overflow-hidden">
-          <div className="bg-gradient-to-r from-[#b05c82] to-[#c8709a] px-6 py-5 flex items-start justify-between">
-            <div>
-              <p className="text-xs font-semibold text-white/60 uppercase tracking-widest mb-1">
-                Candidate Profile
-              </p>
-              <h2 className="text-xl font-bold text-white">
-                {candidate.full_name}
-              </h2>
-              <div className="flex items-center gap-3 mt-2">
-                <StatusBadge status={candidate.status} />
-                <span className="text-xs text-white/50">
-                  Applied {formatDate(candidate.created_at)}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white/60 hover:text-white transition-colors p-1 mt-1"
+      <div
+        className="relative rounded-3xl w-full max-w-2xl my-4 shadow-2xl overflow-hidden"
+        style={{
+          background: T.bg.modal,
+          border: `1px solid ${T.border.default}`,
+        }}
+      >
+        {/* ── Modal Header ── */}
+        <div
+          className="px-6 py-5 flex items-start justify-between"
+          style={{
+            background: `linear-gradient(135deg, ${T.brand.primary}, ${T.brand.primaryHover})`,
+          }}
+        >
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest mb-1"
+              style={{ color: "rgba(255,255,255,0.7)" }}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          {candidate.status === "rejected" && (
-            <div className="bg-[#1a0a0a] border-b border-red-900/40 px-6 py-3 flex items-start gap-3">
-              <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
-                  Rejection Reason
-                </p>
-                <p className="text-sm text-red-200 mt-0.5">
-                  {candidate.rejection_reason ?? (
-                    <span className="text-red-400/50 italic">
-                      No reason recorded
-                    </span>
-                  )}
-                </p>
-              </div>
+              Candidate Profile
+            </p>
+            <h2 className="text-xl font-bold text-white">
+              {candidate.full_name}
+            </h2>
+            <div className="flex items-center gap-3 mt-2">
+              <StatusBadge status={candidate.status} />
+              <span
+                className="text-xs"
+                style={{ color: "rgba(255,255,255,0.6)" }}
+              >
+                Applied {formatDate(candidate.created_at)}
+              </span>
             </div>
-          )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors p-1 mt-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Body */}
+        {candidate.status === "rejected" && (
+          <div
+            className="px-6 py-3 flex items-start gap-3 border-b"
+            style={{
+              background: T.bg.badge.rejected,
+              borderColor: T.border.badge.rejected,
+            }}
+          >
+            <XCircle
+              className="w-4 h-4 flex-shrink-0 mt-0.5"
+              style={{ color: T.text.badge.rejected }}
+            />
+            <div>
+              <p
+                className="text-[11px] font-bold uppercase tracking-wider"
+                style={{ color: T.text.badge.rejected }}
+              >
+                Rejection Reason
+              </p>
+              <p
+                className="text-sm mt-0.5"
+                style={{ color: T.text.primary }}
+              >
+                {candidate.rejection_reason ?? (
+                  <span
+                    className="italic"
+                    style={{ color: T.text.muted }}
+                  >
+                    No reason recorded
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal Body ── */}
         <div className="px-6 py-6 space-y-7 max-h-[70vh] overflow-y-auto">
           {/* Action Buttons */}
           {candidate.status === "pending" && (
@@ -487,13 +576,10 @@ function CandidateModal({
               <button
                 onClick={handleApprove}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-                  bg-green-500/15 text-green-400 border border-green-500/25
-                  hover:bg-green-500/25 hover:border-green-500/40
-                  disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnSuccess}`}
               >
                 {isPending && activeAction === "approve" ? (
-                  <div className="w-4 h-4 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <CheckCircle2 className="w-4 h-4" />
                 )}
@@ -502,13 +588,9 @@ function CandidateModal({
               <button
                 onClick={() => setShowRejectModal(true)}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-                  bg-red-500/15 text-red-400 border border-red-500/25
-                  hover:bg-red-500/25 hover:border-red-500/40
-                  disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnDanger}`}
               >
-                <XCircle className="w-4 h-4" />
-                Reject
+                <XCircle className="w-4 h-4" /> Reject
               </button>
             </div>
           )}
@@ -526,13 +608,10 @@ function CandidateModal({
               <button
                 onClick={handleTrialOffer}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-                  bg-purple-500/15 text-purple-400 border border-purple-500/25
-                  hover:bg-purple-500/25 hover:border-purple-500/40
-                  disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnPurple}`}
               >
                 {isPending && activeAction === "trial_offer" ? (
-                  <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <Star className="w-4 h-4" />
                 )}
@@ -546,13 +625,10 @@ function CandidateModal({
               <button
                 onClick={handleTrialOffer}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-purple-500/15 text-purple-400 border border-purple-500/25
-        hover:bg-purple-500/25 hover:border-purple-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnPurple}`}
               >
                 {isPending && activeAction === "trial_offer" ? (
-                  <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <Star className="w-4 h-4" />
                 )}
@@ -561,13 +637,9 @@ function CandidateModal({
               <button
                 onClick={() => setShowRejectModal(true)}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-red-500/15 text-red-400 border border-red-500/25
-        hover:bg-red-500/25 hover:border-red-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnDanger}`}
               >
-                <XCircle className="w-4 h-4" />
-                Reject
+                <XCircle className="w-4 h-4" /> Reject
               </button>
             </div>
           )}
@@ -577,13 +649,10 @@ function CandidateModal({
               <button
                 onClick={handleTrialSuccess}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-blue-500/15 text-blue-400 border border-blue-500/25
-        hover:bg-blue-500/25 hover:border-blue-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnBlue}`}
               >
                 {isPending && activeAction === "trial_success" ? (
-                  <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <ThumbsUp className="w-4 h-4" />
                 )}
@@ -592,13 +661,10 @@ function CandidateModal({
               <button
                 onClick={handleTrialFail}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-red-500/15 text-red-400 border border-red-500/25
-        hover:bg-red-500/25 hover:border-red-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnDanger}`}
               >
                 {isPending && activeAction === "trial_fail" ? (
-                  <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <ThumbsDown className="w-4 h-4" />
                 )}
@@ -612,13 +678,10 @@ function CandidateModal({
               <button
                 onClick={handleCompleteOnboarding}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-emerald-500/15 text-emerald-400 border border-emerald-500/25
-        hover:bg-emerald-500/25 hover:border-emerald-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnEmerald}`}
               >
                 {isPending && activeAction === "complete_onboarding" ? (
-                  <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                  spinnerPink
                 ) : (
                   <Award className="w-4 h-4" />
                 )}
@@ -627,32 +690,46 @@ function CandidateModal({
               <button
                 onClick={handleTrialFail}
                 disabled={isPending}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold
-        bg-red-500/15 text-red-400 border border-red-500/25
-        hover:bg-red-500/25 hover:border-red-500/40
-        disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={`flex-1 ${T.cls.btnDanger}`}
               >
-                <XCircle className="w-4 h-4" />
-                Reject
+                <XCircle className="w-4 h-4" /> Reject
               </button>
             </div>
           )}
 
           {candidate.status === "on-boarded" && (
-            <div className="flex items-center justify-between py-2.5 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <div
+              className="flex items-center justify-between py-2.5 px-4 rounded-xl border"
+              style={{
+                background: T.bg.badge.onboarded,
+                borderColor: T.border.badge.onboarded,
+              }}
+            >
               <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold text-emerald-400">
+                <Award
+                  className="w-4 h-4"
+                  style={{ color: T.text.badge.onboarded }}
+                />
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: T.text.badge.onboarded }}
+                >
                   Onboarded
                 </span>
                 {candidate.onboarded_at && (
-                  <span className="text-xs text-emerald-600 ml-1">
+                  <span
+                    className="text-xs ml-1"
+                    style={{ color: T.text.muted }}
+                  >
                     since {formatDate(candidate.onboarded_at)}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">
+                <span
+                  className="text-xs"
+                  style={{ color: T.text.muted }}
+                >
                   {candidate.whitelisted ? "Whitelisted" : "Not Whitelisted"}
                 </span>
                 <button
@@ -662,12 +739,15 @@ function CandidateModal({
                     if (!result.error)
                       onStatusChange(candidate.id, { whitelisted: newVal });
                   }}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0
-          ${candidate.whitelisted ? "bg-emerald-500" : "bg-[#2a2a2a]"}`}
+                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0`}
+                  style={{
+                    background: candidate.whitelisted
+                      ? T.brand.primary
+                      : T.border.default,
+                  }}
                 >
                   <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200
-            ${candidate.whitelisted ? "translate-x-6" : "translate-x-0"}`}
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${candidate.whitelisted ? "translate-x-6" : "translate-x-0"}`}
                   />
                 </button>
               </div>
@@ -675,7 +755,14 @@ function CandidateModal({
           )}
 
           {actionError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+            <p
+              className="text-xs rounded-xl px-3 py-2 border"
+              style={{
+                color: T.text.badge.rejected,
+                background: T.bg.badge.rejected,
+                borderColor: T.border.badge.rejected,
+              }}
+            >
               {actionError}
             </p>
           )}
@@ -685,36 +772,50 @@ function CandidateModal({
             candidate.status === "onboarding" ||
             candidate.status === "on-boarded") && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-                Trial Details
-              </h4>
+              <h4 className={T.cls.sectionHeader}>Trial Details</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                    Trial Date
-                  </label>
-                  <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 focus-within:border-[#FDB8D7]/50 transition-colors">
-                    <Calendar className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                  <label className={T.cls.infoLabel}>Trial Date</label>
+                  <div
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors focus-within:ring-2"
+                    style={{
+                      background: T.bg.input,
+                      borderColor: T.border.input,
+                    }}
+                  >
+                    <Calendar
+                      className="w-3.5 h-3.5 flex-shrink-0"
+                      style={{ color: T.text.muted }}
+                    />
                     <input
                       type="date"
                       value={trialDate}
                       onChange={(e) => setTrialDate(e.target.value)}
-                      className="flex-1 bg-transparent text-sm text-white focus:outline-none [color-scheme:dark]"
+                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      style={{ color: T.text.primary }}
                     />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                    Trial Mentor
-                  </label>
-                  <div className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 focus-within:border-[#FDB8D7]/50 transition-colors">
-                    <User className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                  <label className={T.cls.infoLabel}>Trial Mentor</label>
+                  <div
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 border transition-colors"
+                    style={{
+                      background: T.bg.input,
+                      borderColor: T.border.input,
+                    }}
+                  >
+                    <User
+                      className="w-3.5 h-3.5 flex-shrink-0"
+                      style={{ color: T.text.muted }}
+                    />
                     <input
                       type="text"
                       value={trialMentor}
                       onChange={(e) => setTrialMentor(e.target.value)}
                       placeholder="e.g. Mentor name"
-                      className="flex-1 bg-transparent text-sm text-white placeholder:text-gray-600 focus:outline-none"
+                      className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-gray-400"
+                      style={{ color: T.text.primary }}
                     />
                   </div>
                 </div>
@@ -722,13 +823,10 @@ function CandidateModal({
               <button
                 onClick={handleSaveTrialDetails}
                 disabled={trialSaving}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-                  bg-[#FDB8D7]/10 text-[#FDB8D7] border border-[#FDB8D7]/25
-                  hover:bg-[#FDB8D7]/20 hover:border-[#FDB8D7]/40
-                  disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className={T.cls.btnPrimary}
               >
                 {trialSaving ? (
-                  <div className="w-4 h-4 border-2 border-[#FDB8D7]/30 border-t-[#FDB8D7] rounded-full animate-spin" />
+                  spinnerPink
                 ) : trialSaved ? (
                   <CheckCircle2 className="w-4 h-4" />
                 ) : (
@@ -737,7 +835,14 @@ function CandidateModal({
                 {trialSaved ? "Saved!" : "Save Trial Details"}
               </button>
               {trialError && (
-                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                <p
+                  className="text-xs rounded-xl px-3 py-2 border"
+                  style={{
+                    color: T.text.badge.rejected,
+                    background: T.bg.badge.rejected,
+                    borderColor: T.border.badge.rejected,
+                  }}
+                >
                   {trialError}
                 </p>
               )}
@@ -748,19 +853,31 @@ function CandidateModal({
           {(candidate.status === "onboarding" ||
             candidate.status === "on-boarded") && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-[#1f1f1f] pb-2">
-                <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest">
+              <div
+                className="flex items-center justify-between border-b pb-2"
+                style={{ borderColor: T.border.default }}
+              >
+                <h4
+                  className={T.cls.sectionHeader}
+                  style={{ borderBottom: "none" }}
+                >
                   Onboarding Checklist
                 </h4>
                 {candidate.rotacloud_login &&
                 candidate.sumup_account &&
                 candidate.contract_signed &&
                 candidate.added_to_whatsapp_group ? (
-                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: T.text.badge.onboarded }}
+                  >
                     🟢 All Complete
                   </span>
                 ) : (
-                  <span className="text-xs font-semibold text-red-400 flex items-center gap-1">
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: T.text.badge.rejected }}
+                  >
                     🔴 Pending
                   </span>
                 )}
@@ -788,15 +905,30 @@ function CandidateModal({
                     onClick={() =>
                       handleChecklistToggle(field, !candidate[field])
                     }
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#FDB8D7]/30 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors text-left"
+                    style={{
+                      background: T.bg.surfaceAlt,
+                      borderColor: T.border.default,
+                    }}
                   >
                     {candidate[field] ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <CheckSquare
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ color: T.text.badge.onboarded }}
+                      />
                     ) : (
-                      <Square className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                      <Square
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ color: T.text.muted }}
+                      />
                     )}
                     <span
-                      className={`text-sm ${candidate[field] ? "text-emerald-400" : "text-gray-400"}`}
+                      className="text-sm"
+                      style={{
+                        color: candidate[field]
+                          ? T.text.badge.onboarded
+                          : T.text.secondary,
+                      }}
                     >
                       {label}
                     </span>
@@ -808,27 +940,23 @@ function CandidateModal({
 
           {/* Staff Notes */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2 flex items-center gap-2">
-              <NotebookPen className="w-3.5 h-3.5" />
-              Staff Notes
+            <h4 className={`${T.cls.sectionHeader} flex items-center gap-2`}>
+              <NotebookPen className="w-3.5 h-3.5" /> Staff Notes
             </h4>
             <textarea
               value={staffNotes}
               onChange={(e) => setStaffNotes(e.target.value)}
               rows={4}
               placeholder="Add internal notes about this candidate…"
-              className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#FDB8D7]/50 resize-none transition-colors"
+              className={T.cls.textarea}
             />
             <button
               onClick={handleSaveNotes}
               disabled={notesSaving}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-                bg-[#FDB8D7]/10 text-[#FDB8D7] border border-[#FDB8D7]/25
-                hover:bg-[#FDB8D7]/20 hover:border-[#FDB8D7]/40
-                disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className={T.cls.btnPrimary}
             >
               {notesSaving ? (
-                <div className="w-4 h-4 border-2 border-[#FDB8D7]/30 border-t-[#FDB8D7] rounded-full animate-spin" />
+                spinnerPink
               ) : notesSaved ? (
                 <CheckCircle2 className="w-4 h-4" />
               ) : (
@@ -837,7 +965,14 @@ function CandidateModal({
               {notesSaved ? "Saved!" : "Save Notes"}
             </button>
             {notesError && (
-              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+              <p
+                className="text-xs rounded-xl px-3 py-2 border"
+                style={{
+                  color: T.text.badge.rejected,
+                  background: T.bg.badge.rejected,
+                  borderColor: T.border.badge.rejected,
+                }}
+              >
                 {notesError}
               </p>
             )}
@@ -896,7 +1031,7 @@ function CandidateModal({
           {/* Photos */}
           {candidate.photo_urls && candidate.photo_urls.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
+              <h4 className={T.cls.sectionHeader}>
                 Photos ({candidate.photo_urls.length})
               </h4>
               <div className="grid grid-cols-3 gap-2">
@@ -906,7 +1041,11 @@ function CandidateModal({
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] block hover:opacity-90 transition-opacity"
+                    className="aspect-square rounded-xl overflow-hidden block hover:opacity-90 transition-opacity border"
+                    style={{
+                      background: T.bg.surfaceAlt,
+                      borderColor: T.border.default,
+                    }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -922,13 +1061,12 @@ function CandidateModal({
 
           {candidate.certificate_url && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-                Training Certificate
-              </h4>
-
-              {/* PDF certificate */}
-              {candidate.certificate_url.toLowerCase().includes(".pdf") && (
-                <div className="rounded-xl overflow-hidden border border-pink-500/20">
+              <h4 className={T.cls.sectionHeader}>Training Certificate</h4>
+              {candidate.certificate_url.toLowerCase().includes(".pdf") ? (
+                <div
+                  className="rounded-xl overflow-hidden border"
+                  style={{ borderColor: T.border.brandSoft }}
+                >
                   <Link
                     href={candidate.certificate_url.replace(
                       "/image/upload/",
@@ -936,42 +1074,67 @@ function CandidateModal({
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-pink-500/5 hover:bg-pink-500/10 transition-all group"
+                    className="flex items-center gap-3 p-4 hover:opacity-90 transition-all group"
+                    style={{ background: T.brand.soft }}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
-                      <Award className="w-5 h-5" />
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ background: T.brand.softBorder }}
+                    >
+                      <Award
+                        className="w-5 h-5"
+                        style={{ color: T.brand.primary }}
+                      />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-white">Training Certificate</p>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+                      <p
+                        className="text-xs font-medium"
+                        style={{ color: T.text.primary }}
+                      >
+                        Training Certificate
+                      </p>
+                      <p
+                        className="text-[10px] uppercase tracking-wider"
+                        style={{ color: T.text.muted }}
+                      >
                         Click to open PDF
                       </p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-gray-600" />
+                    <ExternalLink
+                      className="w-4 h-4"
+                      style={{ color: T.text.muted }}
+                    />
                   </Link>
                 </div>
-              )}
-
-              {/* Image certificate */}
-              {!candidate.certificate_url.toLowerCase().includes(".pdf") && (
+              ) : (
                 <Link
                   href={candidate.certificate_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-xl overflow-hidden border border-pink-500/20 hover:border-pink-500/50 transition-all group"
+                  className="block rounded-xl overflow-hidden border hover:opacity-90 transition-all"
+                  style={{ borderColor: T.border.brandSoft }}
                 >
                   <div className="relative w-full h-48">
                     <Image
                       src={candidate.certificate_url}
                       alt="Training Certificate"
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-pink-500/5">
-                    <ExternalLink className="w-4 h-4 text-gray-600" />
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                  <div
+                    className="flex items-center gap-2 p-3"
+                    style={{ background: T.brand.soft }}
+                  >
+                    <ExternalLink
+                      className="w-4 h-4"
+                      style={{ color: T.text.muted }}
+                    />
+                    <span
+                      className="text-[10px] uppercase tracking-wider"
+                      style={{ color: T.text.muted }}
+                    >
                       View full image
                     </span>
                   </div>
@@ -980,25 +1143,29 @@ function CandidateModal({
             </div>
           )}
 
-          {/* Passport / ID */}
+          {/* Identity */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-              Identity & Right to Work
-            </h4>
+            <h4 className={T.cls.sectionHeader}>Identity & Right to Work</h4>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <InfoRow
                 label="AI Verification"
                 value={
                   candidate.ai_verification === "Passed" ? (
-                    <span className="flex items-center gap-1 text-green-400">
+                    <span
+                      className="flex items-center gap-1"
+                      style={{ color: T.text.badge.approved }}
+                    >
                       <ShieldCheck className="w-3.5 h-3.5" /> Passed
                     </span>
                   ) : candidate.ai_verification === "Failed" ? (
-                    <span className="flex items-center gap-1 text-red-400">
+                    <span
+                      className="flex items-center gap-1"
+                      style={{ color: T.text.badge.rejected }}
+                    >
                       <ShieldAlert className="w-3.5 h-3.5" /> Failed
                     </span>
                   ) : (
-                    <span className="text-gray-500">Not checked</span>
+                    <span style={{ color: T.text.muted }}>Not checked</span>
                   )
                 }
               />
@@ -1006,7 +1173,7 @@ function CandidateModal({
                 label="UK Passport"
                 value={
                   candidate.is_uk_passport === null ? (
-                    <span className="text-gray-500">Unknown</span>
+                    <span style={{ color: T.text.muted }}>Unknown</span>
                   ) : candidate.is_uk_passport ? (
                     "Yes"
                   ) : (
@@ -1028,7 +1195,11 @@ function CandidateModal({
                 href={candidate.passport_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block mt-2 rounded-xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] hover:border-pink-500/40 transition-colors"
+                className="block mt-2 rounded-xl overflow-hidden border transition-colors"
+                style={{
+                  background: T.bg.surfaceAlt,
+                  borderColor: T.border.default,
+                }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -1036,7 +1207,10 @@ function CandidateModal({
                   alt="Passport"
                   className="w-full max-h-48 object-contain p-2"
                 />
-                <p className="text-center text-xs text-gray-500 pb-2">
+                <p
+                  className="text-center text-xs pb-2"
+                  style={{ color: T.text.muted }}
+                >
                   Click to open full size
                 </p>
               </a>
@@ -1071,37 +1245,54 @@ function CandidateModal({
             />
           </Section>
 
-          {/* Long-form answers */}
+          {/* Written Answers */}
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-              Written Answers
-            </h4>
+            <h4 className={T.cls.sectionHeader}>Written Answers</h4>
             {candidate.understand_role && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                <p className={`${T.cls.infoLabel} mb-1`}>
                   Understanding of the role
                 </p>
-                <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                <p
+                  className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                  style={{
+                    color: T.text.secondary,
+                    background: T.bg.surfaceAlt,
+                    borderColor: T.border.default,
+                  }}
+                >
                   {candidate.understand_role}
                 </p>
               </div>
             )}
             {candidate.why_good_fit && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                  Why a good fit
-                </p>
-                <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                <p className={`${T.cls.infoLabel} mb-1`}>Why a good fit</p>
+                <p
+                  className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                  style={{
+                    color: T.text.secondary,
+                    background: T.bg.surfaceAlt,
+                    borderColor: T.border.default,
+                  }}
+                >
                   {candidate.why_good_fit}
                 </p>
               </div>
             )}
             {candidate.sales_experience && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                <p className={`${T.cls.infoLabel} mb-1`}>
                   Sales & customer service experience
                 </p>
-                <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                <p
+                  className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                  style={{
+                    color: T.text.secondary,
+                    background: T.bg.surfaceAlt,
+                    borderColor: T.border.badge.onboarding,
+                  }}
+                >
                   {candidate.sales_experience}
                 </p>
               </div>
@@ -1116,9 +1307,7 @@ function CandidateModal({
             candidate.availability_locations ||
             candidate.availability_comments) && (
             <div className="space-y-4">
-              <h4 className="text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-[#1f1f1f] pb-2">
-                Submitted Forms Info
-              </h4>
+              <h4 className={T.cls.sectionHeader}>Submitted Forms Info</h4>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 <InfoRow
                   label="Home Address"
@@ -1149,10 +1338,17 @@ function CandidateModal({
               Array.isArray(candidate.availability_dates)
                 ? candidate.availability_dates.length > 0 && (
                     <div>
-                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      <p className={`${T.cls.infoLabel} mb-1`}>
                         Dates Available
                       </p>
-                      <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                      <p
+                        className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                        style={{
+                          color: T.text.secondary,
+                          background: T.bg.surfaceAlt,
+                          borderColor: T.border.default,
+                        }}
+                      >
                         {candidate.availability_dates.join(", ")}
                       </p>
                     </div>
@@ -1161,18 +1357,23 @@ function CandidateModal({
                   JSON.parse(candidate.availability_dates as unknown as string)
                     .length > 0 && (
                     <div>
-                      <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      <p className={`${T.cls.infoLabel} mb-1`}>
                         Dates Available
                       </p>
-                      <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                      <p
+                        className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                        style={{
+                          color: T.text.secondary,
+                          background: T.bg.surfaceAlt,
+                          borderColor: T.border.default,
+                        }}
+                      >
                         {JSON.parse(
                           candidate.availability_dates as unknown as string,
                         ).join(", ")}
                       </p>
                     </div>
                   )}
-
-              {/* 👇 THIS is your requested block */}
               {(!candidate.availability_dates ||
                 (Array.isArray(candidate.availability_dates)
                   ? candidate.availability_dates.length === 0
@@ -1181,20 +1382,34 @@ function CandidateModal({
                     ).length === 0)) &&
                 candidate.unavailable_reason && (
                   <div>
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    <p className={`${T.cls.infoLabel} mb-1`}>
                       This candidate is unavailable because:
                     </p>
-                    <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                    <p
+                      className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                      style={{
+                        color: T.text.secondary,
+                        background: T.bg.surfaceAlt,
+                        borderColor: T.border.default,
+                      }}
+                    >
                       {candidate.unavailable_reason}
                     </p>
                   </div>
                 )}
               {candidate.availability_locations && (
                 <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  <p className={`${T.cls.infoLabel} mb-1`}>
                     Locations Available
                   </p>
-                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                  <p
+                    className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                    style={{
+                      color: T.text.secondary,
+                      background: T.bg.surfaceAlt,
+                      borderColor: T.border.default,
+                    }}
+                  >
                     {(Array.isArray(candidate.availability_locations)
                       ? candidate.availability_locations
                       : JSON.parse(
@@ -1206,10 +1421,15 @@ function CandidateModal({
               )}
               {candidate.availability_comments && (
                 <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Comments
-                  </p>
-                  <p className="text-sm text-gray-300 leading-relaxed bg-[#141414] rounded-xl px-4 py-3 border border-[#1f1f1f]">
+                  <p className={`${T.cls.infoLabel} mb-1`}>Comments</p>
+                  <p
+                    className="text-sm leading-relaxed rounded-xl px-4 py-3 border"
+                    style={{
+                      color: T.text.secondary,
+                      background: T.bg.surfaceAlt,
+                      borderColor: T.border.default,
+                    }}
+                  >
                     {candidate.availability_comments}
                   </p>
                 </div>
@@ -1237,7 +1457,7 @@ function CandidateModal({
                 candidate.wa_sent_at ? (
                   formatDate(candidate.wa_sent_at)
                 ) : (
-                  <span className="text-gray-600">Not sent</span>
+                  <span style={{ color: T.text.muted }}>Not sent</span>
                 )
               }
             />
@@ -1248,7 +1468,7 @@ function CandidateModal({
   );
 }
 
-// ─── Row Actions (inline Approve/Reject in table) ─────────────────────────────
+// ─── Row Actions ──────────────────────────────────────────────────────────────
 
 function RowActions({
   candidate,
@@ -1311,10 +1531,15 @@ function RowActions({
           onClick={handleApprove}
           disabled={isPending}
           title="Approve"
-          className="p-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 disabled:opacity-50 transition-colors"
+          className="p-1.5 rounded-lg border transition-colors disabled:opacity-50"
+          style={{
+            background: T.bg.badge.approved,
+            borderColor: T.border.badge.approved,
+            color: T.text.badge.approved,
+          }}
         >
           {isPending && activeAction === "approve" ? (
-            <div className="w-3.5 h-3.5 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />
+            <div className="w-3.5 h-3.5 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
           ) : (
             <CheckCircle2 className="w-3.5 h-3.5" />
           )}
@@ -1326,10 +1551,15 @@ function RowActions({
           }}
           disabled={isPending}
           title="Reject"
-          className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+          className="p-1.5 rounded-lg border transition-colors disabled:opacity-50"
+          style={{
+            background: T.bg.badge.rejected,
+            borderColor: T.border.badge.rejected,
+            color: T.text.badge.rejected,
+          }}
         >
           {isPending && activeAction === "reject" ? (
-            <div className="w-3.5 h-3.5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+            <div className="w-3.5 h-3.5 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
           ) : (
             <XCircle className="w-3.5 h-3.5" />
           )}
@@ -1339,7 +1569,7 @@ function RowActions({
   );
 }
 
-// ─── Portal Status Dropdown ───────────────────────────────────────────────────
+// ─── Inline Status Dropdown ───────────────────────────────────────────────────
 
 function InlineStatusDropdown({
   candidate,
@@ -1358,9 +1588,8 @@ function InlineStatusDropdown({
 
   function handleOpen(e: React.MouseEvent) {
     e.stopPropagation();
-    if (buttonRef.current) {
+    if (buttonRef.current)
       setDropRect(buttonRef.current.getBoundingClientRect());
-    }
     setOpen((v) => !v);
   }
 
@@ -1379,14 +1608,16 @@ function InlineStatusDropdown({
         title="Click to change status"
       >
         <StatusBadge status={candidate.status} />
-        <ChevronDown className="w-3 h-3 text-gray-600 group-hover:text-gray-400 transition-colors" />
+        <ChevronDown
+          className="w-3 h-3 transition-colors"
+          style={{ color: T.text.muted }}
+        />
       </button>
 
       {open &&
         dropRect &&
         createPortal(
           <>
-            {/* Invisible backdrop to close on outside click */}
             <div
               className="fixed inset-0 z-[9998]"
               onClick={(e) => {
@@ -1394,7 +1625,6 @@ function InlineStatusDropdown({
                 setOpen(false);
               }}
             />
-            {/* Dropdown anchored above the button via fixed positioning */}
             <div
               style={{
                 position: "fixed",
@@ -1402,14 +1632,15 @@ function InlineStatusDropdown({
                 left: dropRect.left,
                 zIndex: 9999,
                 transform: "translateY(-100%)",
+                background: T.bg.modal,
+                borderColor: T.border.default,
               }}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl shadow-2xl py-1 min-w-[160px]"
             >
               {transitions.map((s) => (
                 <button
                   key={s}
                   onClick={(e) => handleSelect(e, s)}
-                  className="w-full text-left px-3 py-2 hover:bg-[#252525] transition-colors flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 transition-colors flex items-center gap-2 hover:bg-gray-50"
                 >
                   <StatusBadge status={s} />
                 </button>
@@ -1447,13 +1678,56 @@ export function CandidatesDashboard({
   const [pendingReject, setPendingReject] = useState<Candidate | null>(null);
   const [rejectPending, setRejectPending] = useState(false);
 
+  // ── Supabase Realtime subscription ─────────────────────────────────────────
+  // Listens for INSERT and UPDATE on milli_candidates.
+  // Prerequisites:
+  //   1. Enable Realtime on the milli_candidates table in Supabase dashboard
+  //   2. NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set
+  useEffect(() => {
+    const channel = supabase
+      .channel("milli_candidates_realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "milli_candidates" },
+        (payload) => {
+          // New candidate submitted — prepend to the list
+          const newCandidate = payload.new as Candidate;
+          setCandidates((prev) => {
+            // Guard: don't add if somehow already present
+            if (prev.some((c) => c.id === newCandidate.id)) return prev;
+            return [newCandidate, ...prev];
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "milli_candidates" },
+        (payload) => {
+          // Row updated externally — patch in place
+          const updated = payload.new as Candidate;
+          setCandidates((prev) =>
+            prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)),
+          );
+          // Also patch the open modal if it's showing this candidate
+          setSelected((prev) =>
+            prev?.id === updated.id ? { ...prev, ...updated } : prev,
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+  // ───────────────────────────────────────────────────────────────────────────
+
   function handleStatusChange(id: string, patch: Partial<Candidate>) {
     setCandidates((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
     );
-    if (selected?.id === id) {
+    if (selected?.id === id)
       setSelected((prev) => (prev ? { ...prev, ...patch } : null));
-    }
   }
 
   async function handleStatusDirect(
@@ -1491,7 +1765,6 @@ export function CandidatesDashboard({
         }),
       });
     }
-
     if (newStatus === "onboarding") {
       fetch("https://n8n.veltraai.net/webhook/successful_trial", {
         method: "POST",
@@ -1566,8 +1839,8 @@ export function CandidatesDashboard({
       );
     })
     .sort((a, b) => {
-      let av: string = "";
-      let bv: string = "";
+      let av = "",
+        bv = "";
       if (sortKey === "created_at") {
         av = a.created_at;
         bv = b.created_at;
@@ -1596,16 +1869,28 @@ export function CandidatesDashboard({
   };
 
   function SortIcon({ k }: { k: SortKey }) {
-    if (sortKey !== k) return <ChevronDown className="w-3 h-3 text-gray-600" />;
+    if (sortKey !== k)
+      return (
+        <ChevronDown
+          className="w-3 h-3"
+          style={{ color: T.text.muted }}
+        />
+      );
     return sortAsc ? (
-      <ChevronUp className="w-3 h-3 text-[#FDB8D7]" />
+      <ChevronUp
+        className="w-3 h-3"
+        style={{ color: T.brand.primary }}
+      />
     ) : (
-      <ChevronDown className="w-3 h-3 text-[#FDB8D7]" />
+      <ChevronDown
+        className="w-3 h-3"
+        style={{ color: T.brand.primary }}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className={T.cls.page}>
       {pendingReject && (
         <RejectReasonModal
           onConfirm={handlePendingRejectConfirm}
@@ -1613,40 +1898,42 @@ export function CandidatesDashboard({
           isPending={rejectPending}
         />
       )}
-      {/* Header */}
-      <header className="bg-[#0d0d0d]/95 backdrop-blur-sm border-b border-[#1a1a1a] sticky top-0 z-10">
+
+      {/* ── Header ── */}
+      <header className={T.cls.header}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0"
-                style={{ boxShadow: "0 0 0 1px #FDB8D730" }}
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border"
+              style={{ borderColor: T.border.brandSoft }}
+            >
+              <Image
+                src="/logo.jpeg"
+                alt="Effervescent Agency"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <p
+                className="text-sm font-bold tracking-tight leading-none"
+                style={{ color: T.brand.primary }}
               >
-                <Image
-                  src="/logo.jpeg"
-                  alt="Effervescent Agency"
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <p
-                  className="text-sm font-bold tracking-tight leading-none"
-                  style={{ color: "#FDB8D7" }}
-                >
-                  Effervescent Agency
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Candidates Dashboard
-                </p>
-              </div>
+                Effervescent Agency
+              </p>
+              <p
+                className="text-xs mt-0.5"
+                style={{ color: T.text.muted }}
+              >
+                Candidates Dashboard
+              </p>
             </div>
           </div>
           <div className="fixed top-4 right-6 z-50 flex items-center gap-3">
             <Link
               href="/"
-              className="px-4 py-1.5 text-sm text-gray-300 border border-white/10 rounded-lg bg-white/5 hover:border-[#FDB8D7]/50 hover:text-[#FDB8D7] hover:bg-[#FDB8D7]/5 transition-all duration-200 tracking-wide"
+              className={T.cls.btnPrimary + " px-4 py-1.5 text-sm"}
             >
               Application Form
             </Link>
@@ -1655,103 +1942,72 @@ export function CandidatesDashboard({
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Search & Filter */}
+        {/* ── Search & Filters ── */}
         <div className="flex flex-col gap-4">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, phone, location…"
-            className="flex-1 px-4 py-2.5 bg-[#111111] border border-[#1f1f1f] rounded-xl text-sm text-white
-              placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:border-transparent"
-            style={{ "--tw-ring-color": "#FDB8D7" } as React.CSSProperties}
-            onFocus={(e) => {
-              e.currentTarget.style.boxShadow = "0 0 0 2px #FDB8D760";
-              e.currentTarget.style.borderColor = "#FDB8D7";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.boxShadow = "";
-              e.currentTarget.style.borderColor = "";
-            }}
+            className={T.cls.input}
           />
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {(
               [
-                {
-                  value: "all",
-                  label: "All",
-                  count: candidates.length,
-                  color: "style",
-                },
-                {
-                  value: "pending",
-                  label: "Pending",
-                  count: counts.pending,
-                  color: "yellow",
-                },
+                { value: "all", label: "All", count: counts.total },
+                { value: "pending", label: "Pending", count: counts.pending },
                 {
                   value: "invite_sent",
                   label: "Invite Sent",
                   count: counts.inviteSent,
-                  color: "blue",
                 },
                 {
                   value: "interview booked",
                   label: "Interview Booked",
                   count: counts.interviewBooked,
-                  color: "sky",
                 },
                 {
                   value: "trial_offered_filter",
                   label: "Trial Offered",
                   count: counts.trialOffered,
-                  color: "purple",
                 },
                 {
                   value: "onboarding",
                   label: "Onboarding",
                   count: counts.onboarding,
-                  color: "blue",
                 },
                 {
                   value: "onboarded_filter",
                   label: "Onboarded",
                   count: counts.onboarded,
-                  color: "emerald",
                 },
                 {
                   value: "rejected",
                   label: "Rejected",
                   count: counts.rejected,
-                  color: "red",
                 },
               ] as const
             ).map(({ value, label, count }) => (
               <button
                 key={value}
                 onClick={() => setStatusFilter(value)}
-                style={
+                className={
                   statusFilter === value
-                    ? {
-                        backgroundColor: "#FDB8D7",
-                        borderColor: "#FDB8D7",
-                        color: "#1a0a10",
-                      }
-                    : {}
+                    ? T.cls.filterActive
+                    : T.cls.filterInactive
                 }
-                className={`px-5 py-3 rounded-xl text-sm font-semibold border transition-all flex items-center gap-2 ${
-                  statusFilter === value
-                    ? ""
-                    : "bg-[#111111] text-gray-400 border-[#1f1f1f] hover:border-[#FDB8D7]/50 hover:text-[#FDB8D7]"
-                }`}
               >
                 {label}
                 <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={
                     statusFilter === value
-                      ? "bg-black/20 text-[#1a0a10]"
-                      : "bg-white/10 text-gray-300"
-                  }`}
+                      ? {
+                          background: "rgba(255,255,255,0.25)",
+                          color: T.brand.primaryText,
+                        }
+                      : { background: T.bg.surfaceAlt, color: T.text.secondary }
+                  }
                 >
                   {count}
                 </span>
@@ -1760,20 +2016,23 @@ export function CandidatesDashboard({
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-[#111111] border border-[#1f1f1f] rounded-2xl overflow-visible">
+        {/* ── Table ── */}
+        <div className={T.cls.tableWrap}>
           {filtered.length === 0 ? (
-            <div className="py-16 text-center text-gray-600">
+            <div
+              className="py-16 text-center"
+              style={{ color: T.text.muted }}
+            >
               <Briefcase className="w-8 h-8 mx-auto mb-3 opacity-30" />
               <p className="text-sm">No candidates found</p>
             </div>
           ) : (
             <>
-              {/* Desktop Table */}
+              {/* Desktop */}
               <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#1a1a1a]">
+                    <tr className={T.cls.thead}>
                       {[
                         { label: "Name", key: "full_name" as SortKey },
                         { label: "Contact", key: null },
@@ -1789,11 +2048,7 @@ export function CandidatesDashboard({
                         <th
                           key={label}
                           onClick={key ? () => toggleSort(key) : undefined}
-                          className={`px-4 py-3 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap ${
-                            key
-                              ? "cursor-pointer hover:text-gray-300 select-none"
-                              : ""
-                          }`}
+                          className={`${T.cls.th} ${key ? "cursor-pointer select-none" : ""}`}
                         >
                           <span className="flex items-center gap-1">
                             {label}
@@ -1803,39 +2058,63 @@ export function CandidatesDashboard({
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#161616]">
+                  <tbody className={T.cls.divider}>
                     {filtered.map((c) => (
                       <tr
                         key={c.id}
                         onClick={() => setSelected(c)}
-                        className="hover:bg-[#161616] cursor-pointer transition-colors group"
+                        className={T.cls.tr}
                       >
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-white group-hover:text-[#FDB8D7] transition-colors">
+                        <td className={T.cls.td}>
+                          <p
+                            className="font-semibold"
+                            style={{ color: T.text.primary }}
+                          >
                             {c.full_name}
                           </p>
                           {c.instagram && (
-                            <p className="text-xs text-gray-600">
+                            <p
+                              className="text-xs"
+                              style={{ color: T.text.muted }}
+                            >
                               {c.instagram}
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="text-gray-300 flex items-center gap-1.5">
-                            <Mail className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                        <td className={T.cls.td}>
+                          <p
+                            className="flex items-center gap-1.5"
+                            style={{ color: T.text.secondary }}
+                          >
+                            <Mail
+                              className="w-3 h-3 flex-shrink-0"
+                              style={{ color: T.text.muted }}
+                            />
                             {c.email}
                           </p>
-                          <p className="text-gray-500 text-xs flex items-center gap-1.5 mt-0.5">
+                          <p
+                            className="text-xs flex items-center gap-1.5 mt-0.5"
+                            style={{ color: T.text.muted }}
+                          >
                             <Phone className="w-3 h-3 flex-shrink-0" />
                             {c.phone}
                           </p>
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="text-gray-300 flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                        <td className={T.cls.td}>
+                          <p
+                            className="flex items-center gap-1.5"
+                            style={{ color: T.text.secondary }}
+                          >
+                            <MapPin
+                              className="w-3 h-3 flex-shrink-0"
+                              style={{ color: T.text.muted }}
+                            />
                             {c.primary_location}
                           </p>
-                          <div className="flex items-center gap-2 mt-0.5 text-gray-600">
+                          <div
+                            className="flex items-center gap-2 mt-0.5"
+                            style={{ color: T.text.muted }}
+                          >
                             {c.does_drive && (
                               <span className="flex items-center gap-0.5 text-xs">
                                 <Car className="w-3 h-3" /> Drives
@@ -1848,11 +2127,14 @@ export function CandidatesDashboard({
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-300 whitespace-nowrap">
+                        <td
+                          className={`${T.cls.td} whitespace-nowrap`}
+                          style={{ color: T.text.secondary }}
+                        >
                           {c.gender ?? "—"}
                         </td>
                         <td
-                          className="px-4 py-3"
+                          className={T.cls.td}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <InlineStatusDropdown
@@ -1861,34 +2143,47 @@ export function CandidatesDashboard({
                           />
                           {c.status === "rejected" && c.rejection_reason && (
                             <p
-                              className="text-[10px] text-red-400/70 italic mt-1 max-w-[160px] truncate"
+                              className="text-[10px] italic mt-1 max-w-[160px] truncate"
+                              style={{ color: T.text.badge.rejected }}
                               title={c.rejection_reason}
                             >
                               {c.rejection_reason}
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-300 text-xs whitespace-nowrap">
+                        <td className={`${T.cls.td} whitespace-nowrap`}>
                           {c.trial_date ? (
-                            <span className="flex items-center gap-1.5">
-                              <Calendar className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                            <span
+                              className="flex items-center gap-1.5 text-xs"
+                              style={{ color: T.text.secondary }}
+                            >
+                              <Calendar
+                                className="w-3 h-3 flex-shrink-0"
+                                style={{ color: T.text.muted }}
+                              />
                               {formatDate(c.trial_date)}
                             </span>
                           ) : (
-                            <span className="text-gray-600">—</span>
+                            <span style={{ color: T.text.muted }}>—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-300 text-xs whitespace-nowrap">
+                        <td className={`${T.cls.td} whitespace-nowrap`}>
                           {c.trial_mentor ? (
-                            <span className="flex items-center gap-1.5">
-                              <User className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                            <span
+                              className="flex items-center gap-1.5 text-xs"
+                              style={{ color: T.text.secondary }}
+                            >
+                              <User
+                                className="w-3 h-3 flex-shrink-0"
+                                style={{ color: T.text.muted }}
+                              />
                               {c.trial_mentor}
                             </span>
                           ) : (
-                            <span className="text-gray-600">—</span>
+                            <span style={{ color: T.text.muted }}>—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-xs whitespace-nowrap">
+                        <td className={`${T.cls.td} whitespace-nowrap text-xs`}>
                           {c.status === "onboarding" ||
                           c.status === "on-boarded" ? (
                             c.rotacloud_login &&
@@ -1900,14 +2195,17 @@ export function CandidatesDashboard({
                               <span title="Pending">🔴</span>
                             )
                           ) : (
-                            <span className="text-gray-600">—</span>
+                            <span style={{ color: T.text.muted }}>—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                        <td
+                          className={`${T.cls.td} whitespace-nowrap text-xs`}
+                          style={{ color: T.text.muted }}
+                        >
                           <Calendar className="w-3 h-3 inline mr-1" />
                           {formatDate(c.created_at)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className={T.cls.td}>
                           <div
                             className="flex items-center gap-2"
                             onClick={(e) => e.stopPropagation()}
@@ -1921,7 +2219,12 @@ export function CandidatesDashboard({
                                 e.stopPropagation();
                                 setSelected(c);
                               }}
-                              className="p-1.5 rounded-lg bg-[#1a1a1a] text-gray-500 hover:text-[#FDB8D7] hover:bg-[#FDB8D7]/10 transition-colors"
+                              className="p-1.5 rounded-lg border transition-colors"
+                              style={{
+                                background: T.bg.surfaceAlt,
+                                borderColor: T.border.default,
+                                color: T.text.muted,
+                              }}
                               title="View"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -1934,20 +2237,31 @@ export function CandidatesDashboard({
                 </table>
               </div>
 
-              {/* Mobile Cards */}
-              <div className="sm:hidden divide-y divide-[#161616]">
+              {/* Mobile */}
+              <div
+                className="sm:hidden divide-y"
+                style={{ borderColor: T.border.table }}
+              >
                 {filtered.map((c) => (
                   <div
                     key={c.id}
                     onClick={() => setSelected(c)}
-                    className="px-4 py-4 cursor-pointer hover:bg-[#161616] transition-colors"
+                    className="px-4 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
-                        <p className="font-semibold text-white">
+                        <p
+                          className="font-semibold"
+                          style={{ color: T.text.primary }}
+                        >
                           {c.full_name}
                         </p>
-                        <p className="text-xs text-gray-500">{c.email}</p>
+                        <p
+                          className="text-xs"
+                          style={{ color: T.text.muted }}
+                        >
+                          {c.email}
+                        </p>
                       </div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <InlineStatusDropdown
@@ -1956,7 +2270,10 @@ export function CandidatesDashboard({
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div
+                      className="flex items-center gap-3 text-xs"
+                      style={{ color: T.text.muted }}
+                    >
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {c.primary_location}
@@ -1964,7 +2281,10 @@ export function CandidatesDashboard({
                       {c.gender && <span>{c.gender}</span>}
                     </div>
                     {c.status === "rejected" && c.rejection_reason && (
-                      <p className="text-[10px] text-red-400/70 italic mt-1">
+                      <p
+                        className="text-[10px] italic mt-1"
+                        style={{ color: T.text.badge.rejected }}
+                      >
                         {c.rejection_reason}
                       </p>
                     )}
@@ -1981,7 +2301,8 @@ export function CandidatesDashboard({
                           e.stopPropagation();
                           setSelected(c);
                         }}
-                        className="ml-auto flex items-center gap-1 text-xs text-gray-500 hover:text-[#FDB8D7] transition-colors"
+                        className="ml-auto flex items-center gap-1 text-xs transition-colors"
+                        style={{ color: T.text.muted }}
                       >
                         <Eye className="w-3.5 h-3.5" /> View
                       </button>
@@ -1993,12 +2314,14 @@ export function CandidatesDashboard({
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-700 pb-2">
+        <p
+          className="text-center text-xs pb-2"
+          style={{ color: T.text.muted }}
+        >
           Showing {filtered.length} of {candidates.length} candidates
         </p>
       </div>
 
-      {/* Detail Modal */}
       {selected && (
         <CandidateModal
           candidate={selected}
