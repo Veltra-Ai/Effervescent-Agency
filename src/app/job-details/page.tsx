@@ -12,8 +12,7 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
-
-const B = "#FDB8D7";
+import { T, PALETTE } from "@/styles/theme";
 
 export default function JobDetailsPage() {
   const [email, setEmail] = useState("");
@@ -64,40 +63,71 @@ export default function JobDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white py-12 px-6">
+    <div
+      style={{ background: T.bg.page, color: T.text.primary }}
+      className="min-h-screen py-12 px-6"
+    >
       <div className="max-w-2xl mx-auto">
         <header className="mb-10">
           <h1
             className="text-3xl font-black mb-2 italic"
-            style={{ color: B }}
+            style={{ color: T.text.brand }}
           >
             WELCOME TO EFFERVESCENT 💃
           </h1>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p
+            style={{ color: T.text.muted }}
+            className="text-sm leading-relaxed"
+          >
             Thank you for completing your onboarding form and availability
-            submission. We’ve now sent you the next steps so you can begin
+            submission. We've now sent you the next steps so you can begin
             preparing to work with us as a self-employed contractor.
           </p>
         </header>
 
         <div className="space-y-8">
           {/* 1. RotaCloud */}
-          <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+          <section
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="rounded-3xl p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <Smartphone
                 className="w-5 h-5"
-                style={{ color: B }}
+                style={{ color: T.text.brand }}
               />
-              <h2 className="font-bold text-lg">1. RotaCloud</h2>
+              <h2
+                style={{ color: T.text.primary }}
+                className="font-bold text-lg"
+              >
+                1. RotaCloud
+              </h2>
             </div>
-            <div className="text-gray-400 text-sm space-y-3">
+            <div
+              style={{ color: T.text.muted }}
+              className="text-sm space-y-3"
+            >
               <p>
                 You should now have received an email invitation to join
                 RotaCloud. Please accept this as soon as possible — this is
                 where you will view and accept shifts.
               </p>
-              <div className="bg-white/5 p-4 rounded-xl space-y-2 border border-white/5">
-                <p className="text-white font-medium">Once logged in:</p>
+              <div
+                style={{
+                  background: T.bg.surfaceAlt,
+                  border: `1px solid ${T.border.default}`,
+                }}
+                className="p-4 rounded-xl space-y-2"
+              >
+                <p
+                  style={{ color: T.text.primary }}
+                  className="font-medium"
+                >
+                  Once logged in:
+                </p>
                 <ul className="list-disc ml-5 space-y-1">
                   <li>Download the RotaCloud app</li>
                   <li>Upload a clear profile photo of yourself</li>
@@ -111,48 +141,78 @@ export default function JobDetailsPage() {
           </section>
 
           {/* 2. Training */}
-          <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+          <section
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="rounded-3xl p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <PlayCircle
                 className="w-5 h-5"
-                style={{ color: B }}
+                style={{ color: T.text.brand }}
               />
-              <h2 className="font-bold text-lg">2. Training Videos</h2>
+              <h2
+                style={{ color: T.text.primary }}
+                className="font-bold text-lg"
+              >
+                2. Training Videos
+              </h2>
             </div>
-            <p className="text-gray-400 text-sm mb-4">
+            <p
+              style={{ color: T.text.muted }}
+              className="text-sm mb-4"
+            >
               Please watch all training videos before your first shift. These
               explain how shifts work, sales techniques, venue expectations and
               equipment setup.
             </p>
             <a
               href="https://drive.google.com/drive/folders/1Pzvi1CYl7_o0X6xNHkZ9_k7bLO_3Rvz8?usp=sharing"
-              className="flex items-center justify-between p-4 bg-[#FDB8D7]/10 rounded-2xl group border border-[#FDB8D7]/20"
+              style={{
+                background: T.brand.soft,
+                border: `1px solid ${T.brand.softBorder}`,
+              }}
+              className="flex items-center justify-between p-4 rounded-2xl hover:opacity-80 transition-opacity"
             >
               <span
+                style={{ color: T.brand.primary }}
                 className="font-bold"
-                style={{ color: B }}
               >
                 Access Training Vault
               </span>
               <ExternalLink
                 className="w-4 h-4"
-                style={{ color: B }}
+                style={{ color: T.brand.primary }}
               />
             </a>
           </section>
 
           {/* 3. Challenge 25 */}
-          <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+          <section
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="rounded-3xl p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <Award
                 className="w-5 h-5"
-                style={{ color: B }}
+                style={{ color: T.text.brand }}
               />
-              <h2 className="font-bold text-lg">
+              <h2
+                style={{ color: T.text.primary }}
+                className="font-bold text-lg"
+              >
                 3. Challenge 25 Training (Mandatory)
               </h2>
             </div>
-            <div className="text-gray-400 text-sm space-y-4">
+            <div
+              style={{ color: T.text.muted }}
+              className="text-sm space-y-4"
+            >
               <p>
                 This is mandatory to work in nightlife environments. Please
                 complete the course within 1 week, or before your first shift if
@@ -161,12 +221,18 @@ export default function JobDetailsPage() {
               <div className="space-y-2">
                 <a
                   href="https://lccexternal.astute-elearning.com/Content/LXP/LXPLogin.aspx?ReturnUrl=%2f"
-                  className="block p-3 bg-white/5 rounded-xl text-center font-bold border border-white/10"
+                  style={{
+                    background: T.bg.surfaceAlt,
+                    border: `1px solid ${T.border.default}`,
+                    color: T.text.primary,
+                  }}
+                  className="block p-3 rounded-xl text-center font-bold hover:opacity-80 transition-opacity"
                 >
                   Start E-Learning
                 </a>
                 <a
                   href="https://drive.google.com/file/d/1PHQkrDCJIekD1BvyGpNsfY_sqU9NgnkE/view?usp=sharing"
+                  style={{ color: T.text.muted }}
                   className="block text-center text-xs underline"
                 >
                   Watch: How to enrol (Demo Video)
@@ -176,9 +242,16 @@ export default function JobDetailsPage() {
               {/* Upload Certificate Form */}
               <form
                 onSubmit={handleUpload}
-                className="mt-6 p-5 bg-[#0d0d0d] border border-dashed border-[#2a2a2a] rounded-2xl space-y-4"
+                style={{
+                  background: T.bg.surfaceAlt,
+                  border: `1px dashed ${T.border.strong}`,
+                }}
+                className="mt-6 p-5 rounded-2xl space-y-4"
               >
-                <p className="text-white font-bold text-xs uppercase tracking-wider">
+                <p
+                  style={{ color: T.text.primary }}
+                  className="font-bold text-xs uppercase tracking-wider"
+                >
                   Upload Certificate
                 </p>
 
@@ -188,7 +261,18 @@ export default function JobDetailsPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#161616] border border-[#2a2a2a] rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#FDB8D7]/50 transition-colors"
+                  style={{
+                    background: T.bg.input,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-xl px-4 py-2 text-sm focus:outline-none transition-colors placeholder:text-gray-400"
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = T.border.inputFocus;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = T.border.input;
+                  }}
                 />
 
                 <div className="relative">
@@ -202,10 +286,20 @@ export default function JobDetailsPage() {
                   />
                   <label
                     htmlFor="cert-upload"
-                    className="flex items-center justify-center gap-2 w-full p-3 bg-white/5 border border-[#2a2a2a] rounded-xl cursor-pointer hover:bg-white/10 transition-all text-xs font-medium"
+                    style={{
+                      background: T.bg.surface,
+                      border: `1px solid ${T.border.default}`,
+                      color: T.text.muted,
+                    }}
+                    className="flex items-center justify-center gap-2 w-full p-3 rounded-xl cursor-pointer hover:opacity-80 transition-all text-xs font-medium"
                   >
                     {file ? (
-                      <span className="text-white truncate">{file.name}</span>
+                      <span
+                        style={{ color: T.text.primary }}
+                        className="truncate"
+                      >
+                        {file.name}
+                      </span>
                     ) : (
                       <>
                         <Upload className="w-4 h-4" />
@@ -219,7 +313,10 @@ export default function JobDetailsPage() {
                   type="submit"
                   disabled={status === "uploading"}
                   className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                  style={{ backgroundColor: B, color: "#000" }}
+                  style={{
+                    backgroundColor: T.brand.primary,
+                    color: T.brand.primaryText,
+                  }}
                 >
                   {status === "uploading" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -234,42 +331,67 @@ export default function JobDetailsPage() {
 
               <p className="text-center text-xs font-medium">
                 Alternatively, email certificate to:{" "}
-                <span style={{ color: B }}>hello@effervescent.agency</span>
+                <span style={{ color: T.text.brand }}>
+                  hello@effervescent.agency
+                </span>
               </p>
             </div>
           </section>
 
           {/* Dress Code */}
-          <section className="bg-[#111111] border border-[#1f1f1f] rounded-3xl p-6">
+          <section
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="rounded-3xl p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <Shirt
                 className="w-5 h-5"
-                style={{ color: B }}
+                style={{ color: T.text.brand }}
               />
-              <h2 className="font-bold text-lg">Dress Code</h2>
+              <h2
+                style={{ color: T.text.primary }}
+                className="font-bold text-lg"
+              >
+                Dress Code
+              </h2>
             </div>
-            <div className="text-gray-400 text-sm space-y-3">
+            <div
+              style={{ color: T.text.muted }}
+              className="text-sm space-y-3"
+            >
               <p>
                 Standard dress code is{" "}
-                <span className="text-white font-bold underline">
+                <span
+                  style={{ color: T.text.primary }}
+                  className="font-bold underline"
+                >
                   ALL BLACK
                 </span>{" "}
                 unless otherwise stated. We expect everyone representing
                 Effervescent to take pride in their appearance.
               </p>
-              <div className="grid grid-cols-2 gap-2 text-[11px] uppercase font-bold tracking-widest text-red-400">
-                <div className="bg-red-400/5 p-2 rounded border border-red-400/10">
-                  No Tracksuits
-                </div>
-                <div className="bg-red-400/5 p-2 rounded border border-red-400/10">
-                  No Gymwear
-                </div>
-                <div className="bg-red-400/5 p-2 rounded border border-red-400/10">
-                  No Jeans
-                </div>
-                <div className="bg-red-400/5 p-2 rounded border border-red-400/10">
-                  No Trainers*
-                </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px] uppercase font-bold tracking-widest">
+                {[
+                  "No Tracksuits",
+                  "No Gymwear",
+                  "No Jeans",
+                  "No Trainers*",
+                ].map((rule) => (
+                  <div
+                    key={rule}
+                    style={{
+                      background: T.bg.badge.rejected,
+                      border: `1px solid ${PALETTE.red}22`,
+                      color: T.text.badge.rejected,
+                    }}
+                    className="p-2 rounded"
+                  >
+                    {rule}
+                  </div>
+                ))}
               </div>
               <p className="text-[10px]">
                 *Except black Converse-style trainers.
@@ -278,16 +400,31 @@ export default function JobDetailsPage() {
           </section>
 
           {/* Ground Rules */}
-          <section className="bg-red-500/5 border border-red-500/20 rounded-3xl p-6">
-            <div className="flex items-center gap-3 mb-4 text-red-400">
+          <section
+            style={{
+              background: T.bg.badge.rejected,
+              border: `1px solid ${PALETTE.red}33`,
+            }}
+            className="rounded-3xl p-6"
+          >
+            <div
+              className="flex items-center gap-3 mb-4"
+              style={{ color: T.text.badge.rejected }}
+            >
               <AlertTriangle className="w-5 h-5" />
               <h2 className="font-bold text-lg uppercase tracking-tight">
                 Important Ground Rules
               </h2>
             </div>
-            <div className="text-xs text-gray-500 space-y-4">
+            <div
+              style={{ color: T.text.muted }}
+              className="text-xs space-y-4"
+            >
               <div className="space-y-2">
-                <p className="text-white font-bold uppercase">
+                <p
+                  style={{ color: T.text.primary }}
+                  className="font-bold uppercase"
+                >
                   No drinking or drug use
                 </p>
                 <p>
@@ -296,14 +433,24 @@ export default function JobDetailsPage() {
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-white font-bold">Sickness & Cancellations</p>
+                <p
+                  style={{ color: T.text.primary }}
+                  className="font-bold"
+                >
+                  Sickness & Cancellations
+                </p>
                 <p>
                   Report sickness before 10am. Two cancellations in 3 months may
                   result in suspension.
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-white font-bold">Shift Allocation</p>
+                <p
+                  style={{ color: T.text.primary }}
+                  className="font-bold"
+                >
+                  Shift Allocation
+                </p>
                 <p>
                   Based on performance, reliability, and venue feedback. Busiest
                   shifts go to those who arrive prepared.
