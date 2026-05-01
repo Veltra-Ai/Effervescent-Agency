@@ -176,3 +176,16 @@ export async function deleteCandidate(id: string): Promise<{ error?: string }> {
   if (error) return { error: error.message };
   return {};
 }
+
+export async function updateCandidateProfile(
+  id: string,
+  patch: Partial<Candidate>,
+): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from("milli_candidates")
+    .update(patch)
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return {};
+}
