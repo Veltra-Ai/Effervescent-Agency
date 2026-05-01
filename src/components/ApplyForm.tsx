@@ -759,16 +759,29 @@ export default function ApplyPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="h-10 rounded-xl overflow-hidden ring-1 ring-pink-200">
-            <Image
-              src="/logo.jpeg"
-              alt="Effervescent Agency"
-              width={180}
-              height={40}
-              className="h-10 w-auto object-contain"
-            />
+          <div className="flex items-center gap-3">
+            {/* Logo Container */}
+            <div className="h-10 rounded-xl overflow-hidden ring-1 ring-pink-200">
+              <Image
+                src="/logo.jpeg"
+                alt="Effervescent Agency"
+                width={180}
+                height={40}
+                className="h-10 w-auto object-contain"
+              />
+            </div>
+
+            {/* Entire title in the pink color */}
+            <h1 className="text-sm font-bold text-pink-400">
+              Effervescent Agency{" "}
+              <span className="hidden sm:inline">
+                - Shot Seller Application Form
+              </span>
+            </h1>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-pink-50 text-pink-600 border-pink-200">
+
+          {/* Counter */}
+          <span className="text-xs font-semibold px-3 py-1 rounded-full border bg-pink-50 text-pink-600 border-pink-200 whitespace-nowrap">
             {slide} / 5
           </span>
         </div>
