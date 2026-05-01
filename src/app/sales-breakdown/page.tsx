@@ -3,8 +3,8 @@
 import { useState, useRef, ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
 import { ChevronDown, Upload, X, CheckCircle2 } from "lucide-react";
+import { T, PALETTE } from "@/styles/theme";
 
-const PINK = "#FDB8D7";
 const WEBHOOK_URL = "https://n8n.veltraai.net/webhook/sales-tracker";
 
 const VENUES = [
@@ -85,11 +85,14 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2">
+    <label
+      style={{ color: T.text.muted }}
+      className="block text-[10px] font-black uppercase tracking-[0.15em] mb-2"
+    >
       {children}{" "}
       {required && (
         <span
-          style={{ color: PINK }}
+          style={{ color: T.text.brand }}
           className="ml-1"
         >
           *
@@ -154,10 +157,25 @@ export default function SalesTrackerPage() {
 
   if (submitted)
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6 text-center">
-        <div className="bg-[#111] p-12 rounded-[3rem] border border-[#222]">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
+      <div
+        style={{ background: T.bg.page }}
+        className="min-h-screen flex items-center justify-center p-6 text-center"
+      >
+        <div
+          style={{
+            background: T.bg.surface,
+            border: `1px solid ${T.border.default}`,
+          }}
+          className="p-12 rounded-[3rem]"
+        >
+          <CheckCircle2
+            className="w-16 h-16 mx-auto mb-6"
+            style={{ color: T.text.badge.approved }}
+          />
+          <h2
+            style={{ color: T.text.primary }}
+            className="text-2xl font-black mb-6 uppercase tracking-tighter"
+          >
             Shift Submitted
           </h2>
           <button
@@ -165,8 +183,11 @@ export default function SalesTrackerPage() {
               setSubmitted(false);
               setForm(INITIAL);
             }}
-            style={{ backgroundColor: PINK }}
-            className="px-8 py-4 rounded-2xl text-black font-black uppercase text-xs"
+            style={{
+              backgroundColor: T.brand.primary,
+              color: T.brand.primaryText,
+            }}
+            className="px-8 py-4 rounded-2xl font-black uppercase text-xs"
           >
             New Entry
           </button>
@@ -175,12 +196,15 @@ export default function SalesTrackerPage() {
     );
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 font-sans">
+    <div
+      style={{ background: T.bg.page, color: T.text.primary }}
+      className="min-h-screen p-6 font-sans"
+    >
       <div className="max-w-xl mx-auto py-12 space-y-8">
         <header className="text-center">
           <h1
             className="text-4xl font-black italic tracking-tighter uppercase"
-            style={{ color: "rgb(253, 184, 215)" }}
+            style={{ color: T.text.brand }}
           >
             Sales Breakdown
           </h1>
@@ -191,14 +215,25 @@ export default function SalesTrackerPage() {
           className="space-y-6"
         >
           {/* SECTION 1: IDENTITY */}
-          <div className="bg-[#111] p-8 rounded-[2.5rem] border border-[#1f1f1f] space-y-6">
+          <div
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="p-8 rounded-[2.5rem] space-y-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <FieldLabel required>Date</FieldLabel>
                 <input
                   type="date"
-                  style={{ colorScheme: "dark" }}
-                  className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm focus:border-[#FDB8D7] outline-none"
+                  style={{
+                    colorScheme: "light",
+                    background: T.bg.inputHover,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400"
                   value={form.date}
                   onChange={(e) => upd({ date: e.target.value })}
                   required
@@ -208,7 +243,12 @@ export default function SalesTrackerPage() {
                 <FieldLabel required>Venue</FieldLabel>
                 <div className="relative">
                   <select
-                    className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm focus:border-[#FDB8D7] outline-none appearance-none cursor-pointer"
+                    style={{
+                      background: T.bg.inputHover,
+                      border: `1px solid ${T.border.input}`,
+                      color: T.text.primary,
+                    }}
+                    className="w-full rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer focus:border-pink-400"
                     value={form.venue}
                     onChange={(e) => upd({ venue: e.target.value })}
                     required
@@ -223,14 +263,22 @@ export default function SalesTrackerPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-6 top-4 w-4 h-4 opacity-30 pointer-events-none" />
+                  <ChevronDown
+                    className="absolute right-6 top-4 w-4 h-4 pointer-events-none"
+                    style={{ color: T.text.muted }}
+                  />
                 </div>
               </div>
             </div>
             <div>
               <FieldLabel required>Full Name</FieldLabel>
               <input
-                className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm focus:border-[#FDB8D7] outline-none"
+                style={{
+                  background: T.bg.inputHover,
+                  border: `1px solid ${T.border.input}`,
+                  color: T.text.primary,
+                }}
+                className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400 placeholder:text-gray-400"
                 value={form.name}
                 placeholder="Enter your name"
                 onChange={(e) => upd({ name: e.target.value })}
@@ -240,7 +288,13 @@ export default function SalesTrackerPage() {
           </div>
 
           {/* SECTION 2: BAR PAYMENT LOGIC */}
-          <div className="bg-[#111] p-8 rounded-[2.5rem] border border-[#1f1f1f] space-y-6">
+          <div
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="p-8 rounded-[2.5rem] space-y-6"
+          >
             <div className="grid grid-cols-1 gap-6">
               <div>
                 <FieldLabel required>Amount paid or owed to the bar</FieldLabel>
@@ -248,7 +302,12 @@ export default function SalesTrackerPage() {
                   type="number"
                   step="0.01"
                   placeholder="£0.00"
-                  className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm outline-none focus:border-[#FDB8D7]"
+                  style={{
+                    background: T.bg.inputHover,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400 placeholder:text-gray-400"
                   value={form.barAmount}
                   onChange={(e) => upd({ barAmount: e.target.value })}
                   required
@@ -266,14 +325,17 @@ export default function SalesTrackerPage() {
                       onClick={() => upd({ paidBarDirectly: opt })}
                       style={
                         form.paidBarDirectly === opt
-                          ? { backgroundColor: PINK }
-                          : {}
+                          ? {
+                              backgroundColor: T.brand.primary,
+                              color: T.brand.primaryText,
+                            }
+                          : {
+                              background: T.bg.surfaceAlt,
+                              color: T.text.muted,
+                              border: `1px solid ${T.border.default}`,
+                            }
                       }
-                      className={`flex-1 py-4 rounded-2xl font-black text-xs transition-all ${
-                        form.paidBarDirectly === opt
-                          ? "text-black"
-                          : "bg-black text-gray-500 border border-[#222]"
-                      }`}
+                      className="flex-1 py-4 rounded-2xl font-black text-xs transition-all"
                     >
                       {opt}
                     </button>
@@ -284,7 +346,13 @@ export default function SalesTrackerPage() {
           </div>
 
           {/* SECTION 3: AGENCY LOGIC */}
-          <div className="bg-[#111] p-8 rounded-[2.5rem] border border-[#1f1f1f] space-y-6">
+          <div
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="p-8 rounded-[2.5rem] space-y-6"
+          >
             <FieldLabel required>
               Did the agency send you money to help pay the bar?
             </FieldLabel>
@@ -301,14 +369,17 @@ export default function SalesTrackerPage() {
                   }
                   style={
                     form.agencySentMoney === opt
-                      ? { backgroundColor: PINK }
-                      : {}
+                      ? {
+                          backgroundColor: T.brand.primary,
+                          color: T.brand.primaryText,
+                        }
+                      : {
+                          background: T.bg.surfaceAlt,
+                          color: T.text.muted,
+                          border: `1px solid ${T.border.default}`,
+                        }
                   }
-                  className={`flex-1 py-4 rounded-2xl font-black text-xs transition-all ${
-                    form.agencySentMoney === opt
-                      ? "text-black"
-                      : "bg-black text-gray-500 border border-[#222]"
-                  }`}
+                  className="flex-1 py-4 rounded-2xl font-black text-xs transition-all"
                 >
                   {opt}
                 </button>
@@ -321,7 +392,12 @@ export default function SalesTrackerPage() {
                   type="number"
                   step="0.01"
                   placeholder="£0.00"
-                  className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm outline-none focus:border-[#FDB8D7]"
+                  style={{
+                    background: T.bg.inputHover,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400 placeholder:text-gray-400"
                   value={form.agencyAmount}
                   onChange={(e) => upd({ agencyAmount: e.target.value })}
                   required
@@ -331,14 +407,25 @@ export default function SalesTrackerPage() {
           </div>
 
           {/* SECTION 4: SALES DATA */}
-          <div className="bg-[#111] p-8 rounded-[2.5rem] border border-[#1f1f1f] space-y-6">
+          <div
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="p-8 rounded-[2.5rem] space-y-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <FieldLabel required>Exact units sold (e.g. 3.5)</FieldLabel>
                 <input
                   type="number"
                   step="0.01"
-                  className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm outline-none focus:border-[#FDB8D7]"
+                  style={{
+                    background: T.bg.inputHover,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400"
                   value={form.bottles}
                   onChange={(e) => upd({ bottles: e.target.value })}
                   required
@@ -350,7 +437,12 @@ export default function SalesTrackerPage() {
                   type="number"
                   step="0.01"
                   placeholder="£0.00"
-                  className="w-full bg-[#161616] border border-[#222] rounded-2xl px-6 py-4 text-sm outline-none focus:border-[#FDB8D7]"
+                  style={{
+                    background: T.bg.inputHover,
+                    border: `1px solid ${T.border.input}`,
+                    color: T.text.primary,
+                  }}
+                  className="w-full rounded-2xl px-6 py-4 text-sm outline-none focus:border-pink-400 placeholder:text-gray-400"
                   value={form.cash}
                   onChange={(e) => upd({ cash: e.target.value })}
                   required
@@ -360,14 +452,27 @@ export default function SalesTrackerPage() {
           </div>
 
           {/* SECTION 5: Images */}
-          <div className="bg-[#111] p-8 rounded-[2.5rem] border border-[#1f1f1f] space-y-6">
+          <div
+            style={{
+              background: T.bg.surface,
+              border: `1px solid ${T.border.default}`,
+            }}
+            className="p-8 rounded-[2.5rem] space-y-6"
+          >
             <FieldLabel>Upload Images</FieldLabel>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#222] rounded-[2rem] p-8 text-center cursor-pointer hover:border-[#FDB8D7] transition-all group"
+              style={{ border: `2px dashed ${T.border.strong}` }}
+              className="rounded-[2rem] p-8 text-center cursor-pointer hover:border-pink-400 transition-all group"
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 opacity-20 group-hover:opacity-100" />
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              <Upload
+                className="w-8 h-8 mx-auto mb-2 opacity-20 group-hover:opacity-100"
+                style={{ color: T.text.primary }}
+              />
+              <p
+                style={{ color: T.text.muted }}
+                className="text-[10px] font-bold uppercase tracking-widest"
+              >
                 Tap to upload images
               </p>
               <input
@@ -384,7 +489,8 @@ export default function SalesTrackerPage() {
                 {form.images.map((img, i) => (
                   <div
                     key={i}
-                    className="relative w-20 h-20 flex-shrink-0 rounded-2xl overflow-hidden border border-[#222]"
+                    style={{ border: `1px solid ${T.border.default}` }}
+                    className="relative w-20 h-20 flex-shrink-0 rounded-2xl overflow-hidden"
                   >
                     <Image
                       src={img}
@@ -400,9 +506,13 @@ export default function SalesTrackerPage() {
                           images: form.images.filter((_, idx) => idx !== i),
                         })
                       }
-                      className="absolute top-1 right-1 bg-black rounded-full p-1"
+                      style={{ background: T.bg.page }}
+                      className="absolute top-1 right-1 rounded-full p-1"
                     >
-                      <X className="w-3 h-3 text-white" />
+                      <X
+                        className="w-3 h-3"
+                        style={{ color: T.text.primary }}
+                      />
                     </button>
                   </div>
                 ))}
@@ -411,8 +521,11 @@ export default function SalesTrackerPage() {
             <button
               type="submit"
               disabled={submitting}
-              style={{ backgroundColor: PINK }}
-              className="w-full py-6 rounded-3xl text-black font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all disabled:opacity-50"
+              style={{
+                backgroundColor: T.brand.primary,
+                color: T.brand.primaryText,
+              }}
+              className="w-full py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all disabled:opacity-50"
             >
               {submitting ? "Sending..." : "Submit Shift Data"}
             </button>
