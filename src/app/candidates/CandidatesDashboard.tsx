@@ -31,6 +31,7 @@ import {
   Square,
   ExternalLink,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { Candidate } from "./types";
 import {
@@ -44,6 +45,7 @@ import {
   updateOnboardingChecklist,
   updateStaffNotes,
   deleteCandidate,
+  updateCandidateProfile,
 } from "./actions";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -274,8 +276,172 @@ function RejectReasonModal({
   );
 }
 
-// ─── Candidate Detail Modal ───────────────────────────────────────────────────
+// ─── Edit Profile Modal ───────────────────────────────────────────────────────
 
+function EditProfileModal({
+  candidate,
+  onSave,
+  onCancel,
+}: {
+  candidate: Candidate;
+  onSave: (patch: Partial<Candidate>) => void;
+  onCancel: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const [form, setForm] = useState({
+    full_name: candidate.full_name ?? "",
+    email: candidate.email ?? "",
+    phone: candidate.phone ?? "",
+    instagram: candidate.instagram ?? "",
+    primary_location: candidate.primary_location ?? "",
+    second_location: candidate.second_location ?? "",
+    home_address: candidate.home_address ?? "",
+    emergency_contact_name: candidate.emergency_contact_name ?? "",
+    emergency_contact_phone: candidate.emergency_contact_phone ?? "",
+    emergency_contact_relationship:
+      candidate.emergency_contact_relationship ?? "",
+    bank_account_number: candidate.bank_account_number ?? "",
+    bank_sort_code: candidate.bank_sort_code ?? "",
+  });
+
+  function handleChange(field: keyof typeof form, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setError("");
+    const result = await updateCandidateProfile(candidate.id, form);
+    setSaving(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      onSave(form);
+    }
+  }
+
+  const spinner = (
+    <div className="w-4 h-4 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin" />
+  );
+
+  const fields: { label: string; key: keyof typeof form; type?: string }[] = [
+    { label: "Full Name", key: "full_name" },
+    { label: "Email", key: "email", type: "email" },
+    { label: "Phone", key: "phone", type: "tel" },
+    { label: "Instagram", key: "instagram" },
+    { label: "Primary Location", key: "primary_location" },
+    { label: "Second Location", key: "second_location" },
+    { label: "Home Address", key: "home_address" },
+    { label: "Emergency Contact Name", key: "emergency_contact_name" },
+    {
+      label: "Emergency Contact Phone",
+      key: "emergency_contact_phone",
+      type: "tel",
+    },
+    { label: "Emergency Relationship", key: "emergency_contact_relationship" },
+    { label: "Bank Account Number", key: "bank_account_number" },
+    { label: "Sort Code", key: "bank_sort_code" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div
+        className={`${T.cls.backdrop} fixed inset-0`}
+        onClick={onCancel}
+      />
+      <div
+        className="relative rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+        style={{
+          background: T.bg.modal,
+          border: `1px solid ${T.border.default}`,
+        }}
+      >
+        {/* Header */}
+        <div
+          className="px-6 py-4 flex items-center justify-between"
+          style={{
+            background: `linear-gradient(135deg, ${T.brand.primary}, ${T.brand.primaryHover})`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <Pencil className="w-4 h-4 text-white/80" />
+            <h3 className="font-semibold text-white">Edit Profile</h3>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3">
+            {fields.map(({ label, key, type = "text" }) => (
+              <div
+                key={key}
+                className="flex flex-col gap-1.5"
+              >
+                <label className={T.cls.infoLabel}>{label}</label>
+                <input
+                  type={type}
+                  value={form[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  className="rounded-xl px-3 py-2 text-sm border focus:outline-none focus:ring-2"
+                  style={{
+                    background: T.bg.input,
+                    borderColor: T.border.input,
+                    color: T.text.primary,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {error && (
+            <p
+              className="text-xs rounded-xl px-3 py-2 border"
+              style={{
+                color: T.text.badge.rejected,
+                background: T.bg.badge.rejected,
+                borderColor: T.border.badge.rejected,
+              }}
+            >
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div
+          className="px-6 py-4 flex gap-3 border-t"
+          style={{ borderColor: T.border.default }}
+        >
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2 rounded-xl text-sm font-medium border transition-all"
+            style={{ borderColor: T.border.default, color: T.text.secondary }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`flex-1 ${T.cls.btnPrimary}`}
+          >
+            {saving ? spinner : <Save className="w-4 h-4" />}
+            {saving ? "Saving…" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Candidate Detail Modal ───────────────────────────────────────────────────
 function CandidateModal({
   candidate,
   onClose,
@@ -308,6 +474,7 @@ function CandidateModal({
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [notesError, setNotesError] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
 
   async function handleSaveTrialDetails() {
     setTrialSaving(true);
@@ -526,13 +693,33 @@ function CandidateModal({
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/70 hover:text-white transition-colors p-1 mt-1"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="text-white/70 hover:text-white transition-colors p-1 mt-1"
+              title="Edit profile"
+            >
+              <Pencil className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-white transition-colors p-1 mt-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+
+        {showEditModal && (
+          <EditProfileModal
+            candidate={candidate}
+            onSave={(patch) => {
+              onStatusChange(candidate.id, patch);
+              setShowEditModal(false);
+            }}
+            onCancel={() => setShowEditModal(false)}
+          />
+        )}
 
         {candidate.status === "rejected" && (
           <div
