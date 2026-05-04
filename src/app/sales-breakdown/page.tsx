@@ -127,15 +127,27 @@ export default function SalesTrackerPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+
+    const payload = {
+      ...form,
+      images: form.images || [],
+    };
+
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
-      if (res.ok) setSubmitted(true);
-    } catch {
-      alert("Submission failed.");
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        throw new Error("Failed to submit");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Submission failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
