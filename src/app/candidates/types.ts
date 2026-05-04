@@ -66,4 +66,5 @@ export interface Candidate {
   availability_comments: string | null;
   forms_submitted: boolean;
   unavailable_reason: string | null;
+  contract_signed_url: string | null;
 }

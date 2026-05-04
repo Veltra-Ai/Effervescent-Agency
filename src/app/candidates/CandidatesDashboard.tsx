@@ -32,6 +32,7 @@ import {
   ExternalLink,
   Trash2,
   Pencil,
+  FileText,
 } from "lucide-react";
 import { Candidate } from "./types";
 import {
@@ -1329,6 +1330,52 @@ function CandidateModal({
                   </div>
                 </Link>
               )}
+            </div>
+          )}
+
+          {candidate.contract_signed_url && (
+            <div className="space-y-3 mt-6">
+              <h4 className={T.cls.sectionHeader}>Signed Contract</h4>
+              <div
+                className="rounded-xl overflow-hidden border"
+                style={{ borderColor: T.border.brandSoft }}
+              >
+                <Link
+                  href={candidate.contract_signed_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 hover:opacity-90 transition-all group"
+                  style={{ background: T.brand.soft }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ background: T.brand.softBorder }}
+                  >
+                    <FileText
+                      className="w-5 h-5"
+                      style={{ color: T.brand.primary }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p
+                      className="text-xs font-medium"
+                      style={{ color: T.text.primary }}
+                    >
+                      Signed Agreement
+                    </p>
+                    <p
+                      className="text-[10px] uppercase tracking-wider"
+                      style={{ color: T.text.muted }}
+                    >
+                      Click to view document
+                    </p>
+                  </div>
+                  <ExternalLink
+                    className="w-4 h-4"
+                    style={{ color: T.text.muted }}
+                  />
+                </Link>
+              </div>
             </div>
           )}
 
