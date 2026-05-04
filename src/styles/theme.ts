@@ -15,6 +15,7 @@
 export const PALETTE = {
   // Brand pinks
   pink: "#ec4899", // primary action colour (buttons, active states)
+  customPink: "#FFB8D7",
   pinkLight: "#fdf2f8", // very light pink tint — used for hover bg, etc.
   pinkMid: "#fbcfe8", // softer pink for borders, badges
   pinkDark: "#be185d", // deeper pink for hover on buttons
@@ -122,6 +123,7 @@ export const T = {
   // ── Brand / action ───────────────────────────────────────────────────────────
   brand: {
     primary: PALETTE.pink,
+    custom: PALETTE.customPink,
     primaryHover: PALETTE.pinkDark,
     primaryText: PALETTE.white, // text on pink buttons
     soft: PALETTE.pinkLight, // very light pink bg
