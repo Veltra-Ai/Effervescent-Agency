@@ -87,8 +87,6 @@ const HEARD_ABOUT_OPTIONS = [
   "Trade shows / Exhibitions",
 ];
 
-const GENDER_OPTIONS = ["Female", "Male", "Non-binary", "Prefer not to say"];
-
 const WEBHOOK_URL = "https://n8n.veltraai.net/webhook/web-form-milli";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = [
@@ -126,7 +124,6 @@ interface FileData {
 interface FormState {
   fullName: string;
   dob: string;
-  gender: string;
   email: string;
   phone: string;
   instagram: string;
@@ -155,7 +152,6 @@ interface FormState {
 const INITIAL: FormState = {
   fullName: "",
   dob: "",
-  gender: "",
   email: "",
   phone: "",
   instagram: "",
@@ -563,7 +559,6 @@ export default function ApplyPage() {
       if (!form.dob) e.dob = "Date of birth is required";
       else if (!isAtLeast18(form.dob))
         e.dob = "You must be at least 18 years old to apply";
-      if (!form.gender) e.gender = "Please select your gender identity";
       if (!form.email.trim()) e.email = "Email address is required";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = "Please enter a valid email address";
@@ -687,9 +682,7 @@ export default function ApplyPage() {
         personalInfo: {
           fullName: form.fullName,
           dateOfBirth: form.dob,
-          gender: form.gender,
           email: form.email,
-          // phone is already normalised to E.164 via onBlur — safe for DB + WhatsApp API
           phone: form.phone,
           instagram: form.instagram,
         },
@@ -872,15 +865,6 @@ export default function ApplyPage() {
                   <FieldError message={errors.dob} />
                 </div>
                 <div>
-                  <FieldLabel required>What do you identify as?</FieldLabel>
-                  <RadioGroup
-                    options={GENDER_OPTIONS}
-                    value={form.gender}
-                    onChange={(v) => upd({ gender: v })}
-                  />
-                  <FieldError message={errors.gender} />
-                </div>
-                <div>
                   <FieldLabel required>Email Address</FieldLabel>
                   <TextInput
                     type="email"
@@ -890,7 +874,6 @@ export default function ApplyPage() {
                   />
                   <FieldError message={errors.email} />
                 </div>
-
                 {/* ── Phone — international-aware ── */}
                 <div>
                   <FieldLabel required>Mobile Phone / WhatsApp</FieldLabel>
@@ -931,7 +914,6 @@ export default function ApplyPage() {
                   </div>
                   <FieldError message={errors.phone} />
                 </div>
-
                 <div>
                   <FieldLabel required>Instagram Username</FieldLabel>
                   <TextInput
