@@ -2,23 +2,17 @@
  * ─── Effervescent Agency — Central Theme ──────────────────────────────────────
  *
  * All colours, shadows, and design tokens live here.
- * To retheme the entire project, only edit this file.
- *
- * Usage:
- *   import { T } from "@/styles/theme";
- *   <div style={{ background: T.bg.page }} />
- *   className={T.cls.card}          // pre-built Tailwind class strings
  */
 
 // ─── Raw colour palette ───────────────────────────────────────────────────────
 
 export const PALETTE = {
   // Brand pinks
-  pink: "#ec4899", // primary action colour (buttons, active states)
-  customPink: "#FFB8D7",
-  pinkLight: "#fdf2f8", // very light pink tint — used for hover bg, etc.
-  pinkMid: "#fbcfe8", // softer pink for borders, badges
-  pinkDark: "#be185d", // deeper pink for hover on buttons
+  pink: "#FDB8D7",
+  customPink: "#FDB8D7",
+  pinkLight: "#fdf2f8",
+  pinkMid: "#fbcfe8",
+  pinkDark: "#be185d",
 
   // Neutrals
   white: "#ffffff",
@@ -56,17 +50,16 @@ export const PALETTE = {
 // ─── Semantic tokens ──────────────────────────────────────────────────────────
 
 export const T = {
-  // ── Backgrounds ──────────────────────────────────────────────────────────────
   bg: {
-    page: PALETTE.white, // main page background
-    surface: PALETTE.white, // cards, table container
-    surfaceAlt: PALETTE.gray50, // alternate row / subtle section bg
-    header: PALETTE.white, // sticky header background
-    input: PALETTE.white, // form inputs
+    page: PALETTE.white,
+    surface: PALETTE.white,
+    surfaceAlt: PALETTE.gray50,
+    header: PALETTE.white,
+    input: PALETTE.white,
     inputHover: PALETTE.gray50,
-    modal: PALETTE.white, // modal / drawer background
-    modalHeader: PALETTE.pink, // modal gradient header (solid fallback)
-    overlay: "rgba(0,0,0,0.45)", // backdrop
+    modal: PALETTE.white,
+    modalHeader: PALETTE.pink,
+    overlay: "rgba(0,0,0,0.45)",
     badge: {
       pending: PALETTE.yellowLight,
       approved: PALETTE.greenLight,
@@ -79,7 +72,6 @@ export const T = {
     },
   },
 
-  // ── Text ─────────────────────────────────────────────────────────────────────
   text: {
     primary: PALETTE.gray900,
     secondary: PALETTE.gray900,
@@ -99,7 +91,6 @@ export const T = {
     },
   },
 
-  // ── Borders ──────────────────────────────────────────────────────────────────
   border: {
     default: PALETTE.gray200,
     strong: PALETTE.gray300,
@@ -120,17 +111,15 @@ export const T = {
     },
   },
 
-  // ── Brand / action ───────────────────────────────────────────────────────────
   brand: {
     primary: PALETTE.pink,
     custom: PALETTE.customPink,
     primaryHover: PALETTE.pinkDark,
-    primaryText: PALETTE.white, // text on pink buttons
-    soft: PALETTE.pinkLight, // very light pink bg
+    primaryText: PALETTE.white,
+    soft: PALETTE.pinkLight,
     softBorder: PALETTE.pinkMid,
   },
 
-  // ── Shadows ──────────────────────────────────────────────────────────────────
   shadow: {
     sm: "0 1px 3px rgba(0,0,0,0.08)",
     md: "0 4px 12px rgba(0,0,0,0.10)",
@@ -138,39 +127,27 @@ export const T = {
     card: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
   },
 
-  // ── Pre-built Tailwind class strings (light theme) ────────────────────────
-  // Use these for elements that appear many times so a single token change
-  // propagates everywhere automatically.
   cls: {
-    // Page shell
     page: "min-h-screen bg-white",
     header: "bg-white border-b border-gray-200 sticky top-0 z-10",
-
-    // Cards / containers
     card: "bg-white border border-gray-200 rounded-2xl shadow-sm",
     cardHover: "hover:bg-gray-50 transition-colors",
-
-    // Table
     tableWrap: "bg-white border border-gray-200 rounded-2xl overflow-visible",
     thead: "border-b border-gray-100",
-    th: "px-4 py-3 text-left text-[11px] font-bold text-pink-500 uppercase tracking-wider whitespace-nowrap",
-    tr: "hover:bg-pink-50/40 cursor-pointer transition-colors group",
+    th: "px-4 py-3 text-left text-[11px] font-bold text-[#FDB8D7] uppercase tracking-wider whitespace-nowrap",
+    tr: "hover:bg-[#FDB8D7]/10 cursor-pointer transition-colors group",
     td: "px-4 py-3 text-gray-800 text-sm",
     divider: "divide-y divide-gray-100",
-
-    // Inputs
     input:
-      "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all",
+      "w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FDB8D7] focus:border-[#FDB8D7] transition-all",
     textarea:
-      "w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 resize-none transition-all",
-
-    // Buttons
+      "w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FDB8D7] focus:border-[#FDB8D7] resize-none transition-all",
     btnPrimary:
-      "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm",
+      "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#FDB8D7] text-white hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm",
     btnSecondary:
       "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 transition-all",
     btnGhost:
-      "flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-pink-500 hover:bg-pink-50 transition-all",
+      "flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-[#FDB8D7] hover:bg-[#FDB8D7]/10 transition-all",
     btnDanger:
       "flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all",
     btnSuccess:
@@ -181,23 +158,15 @@ export const T = {
       "flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all",
     btnEmerald:
       "flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all",
-
-    // Filter pills
     filterActive:
-      "px-4 py-2 rounded-full text-sm font-semibold border transition-all flex items-center gap-2 bg-pink-500 text-white border-pink-500 shadow-sm",
+      "px-4 py-2 rounded-full text-sm font-semibold border transition-all flex items-center gap-2 bg-[#FDB8D7] text-white border-[#FDB8D7] shadow-sm",
     filterInactive:
-      "px-4 py-2 rounded-full text-sm font-semibold border transition-all flex items-center gap-2 bg-white text-gray-600 border-gray-300 hover:border-pink-400 hover:text-pink-500",
-
-    // Section headers inside modal
+      "px-4 py-2 rounded-full text-sm font-semibold border transition-all flex items-center gap-2 bg-white text-gray-600 border-gray-300 hover:border-[#FDB8D7] hover:text-[#FDB8D7]",
     sectionHeader:
-      "text-xs font-bold text-pink-500 uppercase tracking-widest border-b border-gray-200 pb-2",
-
-    // Info labels
+      "text-xs font-bold text-[#FDB8D7] uppercase tracking-widest border-b border-gray-200 pb-2",
     infoLabel:
       "text-[11px] font-semibold text-gray-400 uppercase tracking-wider",
     infoValue: "text-sm text-gray-800",
-
-    // Modal backdrop
     backdrop: "fixed inset-0 bg-black/40 backdrop-blur-sm",
   },
 } as const;
