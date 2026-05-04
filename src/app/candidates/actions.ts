@@ -129,6 +129,7 @@ export async function updateOnboardingChecklist(
     sumup_account?: boolean;
     contract_signed?: boolean;
     added_to_whatsapp_group?: boolean;
+    bank_details_submitted?: boolean;
   },
 ): Promise<{ error?: string }> {
   const { error } = await supabase

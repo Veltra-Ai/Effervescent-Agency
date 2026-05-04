@@ -505,7 +505,8 @@ function CandidateModal({
       | "rotacloud_login"
       | "sumup_account"
       | "contract_signed"
-      | "added_to_whatsapp_group",
+      | "added_to_whatsapp_group"
+      | "bank_details_submitted",
     value: boolean,
   ) {
     const result = await updateOnboardingChecklist(candidate.id, {
@@ -1103,6 +1104,7 @@ function CandidateModal({
                 {candidate.rotacloud_login &&
                 candidate.sumup_account &&
                 candidate.contract_signed &&
+                candidate.bank_details_submitted &&
                 candidate.added_to_whatsapp_group ? (
                   <span
                     className="text-xs font-semibold"
@@ -1134,6 +1136,10 @@ function CandidateModal({
                     {
                       field: "added_to_whatsapp_group" as const,
                       label: "Added to WhatsApp Group",
+                    },
+                    {
+                      field: "bank_details_submitted" as const,
+                      label: "Bank Details Submitted",
                     },
                   ] as const
                 ).map(({ field, label }) => (

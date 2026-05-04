@@ -67,4 +67,5 @@ export interface Candidate {
   forms_submitted: boolean;
   unavailable_reason: string | null;
   contract_signed_url: string | null;
+  bank_details_submitted: boolean;
 }
