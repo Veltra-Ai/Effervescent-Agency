@@ -1128,19 +1128,26 @@ export default function ApplyPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <StyledCheckbox
-                    id="nonUkPassport"
-                    checked={form.nonUkPassport}
-                    onCheckedChange={(v) =>
-                      upd({
-                        nonUkPassport: v,
-                        shareCode: v ? form.shareCode : "",
-                      })
-                    }
-                    label="I have a non-UK passport"
-                  />
-                  {form.nonUkPassport && (
-                    <div className="pl-8">
+                  <div>
+                    <FieldLabel required>Do you have a UK passport?</FieldLabel>
+                    <YesNoToggle
+                      value={
+                        form.nonUkPassport === false
+                          ? "yes"
+                          : form.nonUkPassport === true
+                            ? "no"
+                            : ""
+                      }
+                      onChange={(v) =>
+                        upd({
+                          nonUkPassport: v === "no",
+                          shareCode: v === "yes" ? "" : form.shareCode,
+                        })
+                      }
+                    />
+                  </div>
+                  {form.nonUkPassport === true && (
+                    <div className="pl-4 border-l-2 border-pink-200">
                       <FieldLabel required>Share Code</FieldLabel>
                       <TextInput
                         value={form.shareCode}
