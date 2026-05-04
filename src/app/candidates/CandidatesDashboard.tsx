@@ -174,7 +174,9 @@ function Section({
   return (
     <div className="space-y-3">
       <h4 className={T.cls.sectionHeader}>{title}</h4>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3">{children}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+        {children}
+      </div>
     </div>
   );
 }
