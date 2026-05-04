@@ -613,6 +613,33 @@ function CandidateModal({
     });
   }
 
+  async function handleResendContract() {
+    setActionError("");
+    setActiveAction("complete_onboarding");
+
+    startTransition(async () => {
+      // This is the same fetch call found in handleTrialSuccess
+      const result = await fetch(
+        "https://n8n.veltraai.net/webhook/send-Docusign",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: candidate.full_name,
+            phone: candidate.phone,
+            email: candidate.email,
+            candidate_id: candidate.id,
+          }),
+        },
+      );
+
+      if (!result.ok) {
+        setActionError("Failed to resend contract. Please try again.");
+      }
+      setActiveAction(null);
+    });
+  }
+
   function handleCompleteOnboarding() {
     setActionError("");
     setActiveAction("complete_onboarding");
@@ -865,6 +892,7 @@ function CandidateModal({
 
           {candidate.status === "onboarding" && (
             <div className="flex gap-3">
+              {/*Complete onboarding Button */}
               <button
                 onClick={handleCompleteOnboarding}
                 disabled={isPending}
@@ -877,6 +905,23 @@ function CandidateModal({
                 )}
                 Complete Onboarding
               </button>
+
+              {/* Resend Button */}
+              <button
+                onClick={handleResendContract}
+                disabled={isPending}
+                className={`flex-1 border py-2 rounded-xl text-sm font-medium`}
+                style={{
+                  borderColor: T.border.default,
+                  color: T.text.secondary,
+                }}
+              >
+                {isPending && activeAction === "complete_onboarding"
+                  ? "Sending..."
+                  : "Resend Contract"}
+              </button>
+
+              {/*  Reject Button */}
               <button
                 onClick={handleTrialFail}
                 disabled={isPending}
