@@ -128,9 +128,15 @@ export default function SalesTrackerPage() {
     e.preventDefault();
     setSubmitting(true);
 
+    // 1. Create the images array dynamically from your existing form fields
+    const imagesArray = [];
+    if (form.bottleImage) imagesArray.push(form.bottleImage);
+    if (form.paymentImage) imagesArray.push(form.paymentImage);
+
+    // 2. Build the payload including the individual fields AND the new images array
     const payload = {
       ...form,
-      images: form.images || [],
+      images: imagesArray,
     };
 
     try {
@@ -152,7 +158,6 @@ export default function SalesTrackerPage() {
       setSubmitting(false);
     }
   };
-
   if (submitted)
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-center bg-gray-50">
