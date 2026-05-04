@@ -1227,10 +1227,6 @@ function CandidateModal({
               label="Instagram"
               value={candidate.instagram}
             />
-            <InfoRow
-              label="Gender"
-              value={candidate.gender}
-            />
           </Section>
 
           {/* Location */}
@@ -2327,7 +2323,6 @@ export function CandidatesDashboard({
                         { label: "Name", key: "full_name" as SortKey },
                         { label: "Contact", key: null },
                         { label: "Location", key: null },
-                        { label: "Gender", key: null },
                         { label: "Status", key: "status" as SortKey },
                         { label: "Trial Date", key: null },
                         { label: "Trial Mentor", key: null },
@@ -2416,12 +2411,6 @@ export function CandidatesDashboard({
                               </span>
                             )}
                           </div>
-                        </td>
-                        <td
-                          className={`${T.cls.td} whitespace-nowrap`}
-                          style={{ color: T.text.secondary }}
-                        >
-                          {c.gender ?? "—"}
                         </td>
                         <td
                           className={T.cls.td}
@@ -2583,7 +2572,6 @@ export function CandidatesDashboard({
                         <MapPin className="w-3 h-3" />
                         {c.primary_location}
                       </span>
-                      {c.gender && <span>{c.gender}</span>}
                     </div>
                     {c.status === "rejected" && c.rejection_reason && (
                       <p
