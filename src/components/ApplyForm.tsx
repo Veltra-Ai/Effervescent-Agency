@@ -558,7 +558,8 @@ export default function ApplyPage() {
       if (!form.fullName.trim()) e.fullName = "Full name is required";
       if (!form.dob) e.dob = "Date of birth is required";
       else if (!isAtLeast18(form.dob))
-        e.dob = "You must be at least 18 years old to apply";
+        e.dob =
+          "Due to the nature of this work - we can only accept applicants over 18";
       if (!form.email.trim()) e.email = "Email address is required";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = "Please enter a valid email address";
