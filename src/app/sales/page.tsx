@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { Sale } from "./types";
+import { T } from "@/styles/theme"; // Import your central theme
 import {
   Table,
   TableBody,
@@ -18,44 +19,38 @@ export default async function SalesPage() {
     .order("date_of_shift", { ascending: false });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e7eb] p-6 md:p-10">
+    <div className={`${T.cls.page} bg-gray-900 p-6 md:p-10`}>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-[#ffb6c1]/10 rounded-lg">
-            <ShoppingCart className="w-5 h-5 text-[#ffb6c1]" />
+          <div className="p-2 bg-pink-50 rounded-lg">
+            <ShoppingCart className="w-5 h-5 text-pink-500" />
           </div>
-          <h1 className="text-xl font-bold text-white">Sales Ledger</h1>
+          <h1 className="text-xl font-bold text-gray-900">Sales Ledger</h1>
         </div>
 
-        <div className="bg-[#111111] rounded-xl border border-white/5 overflow-hidden shadow-2xl">
+        <div className={T.cls.tableWrap}>
           <Table>
-            <TableHeader className="bg-[#1a1a1a]">
-              <TableRow className="border-white/5 hover:bg-transparent">
-                <TableHead className="text-gray-500 text-[10px] uppercase">
-                  Date
-                </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase">
-                  Venue
-                </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase">
-                  Seller
-                </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-center">
+            <TableHeader className={T.cls.thead}>
+              <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHead className={T.cls.th}>Date</TableHead>
+                <TableHead className={T.cls.th}>Venue</TableHead>
+                <TableHead className={T.cls.th}>Seller</TableHead>
+                <TableHead className={T.cls.th + " text-center"}>
                   Units
                 </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-right">
+                <TableHead className={T.cls.th + " text-right"}>
                   Bar £
                 </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-right">
+                <TableHead className={T.cls.th + " text-right"}>
                   Cash £
                 </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-center">
+                <TableHead className={T.cls.th + " text-center"}>
                   Paid Direct
                 </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-right">
+                <TableHead className={T.cls.th + " text-right"}>
                   Agency £
                 </TableHead>
-                <TableHead className="text-gray-500 text-[10px] uppercase text-right">
+                <TableHead className={T.cls.th + " text-right"}>
                   Images
                 </TableHead>
               </TableRow>
@@ -65,35 +60,33 @@ export default async function SalesPage() {
                 sales.map((sale: Sale) => (
                   <TableRow
                     key={sale.id}
-                    className="border-white/5 hover:bg-white/[0.02]"
+                    className={T.cls.tr}
                   >
-                    <TableCell className="text-gray-400 text-xs">
+                    <TableCell className="text-gray-500 text-xs">
                       {sale.date_of_shift}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className="border-white/10 text-gray-300"
+                        className="border-gray-200 text-gray-600"
                       >
                         {sale.venue}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-200">
-                      {sale.full_name}
-                    </TableCell>
-                    <TableCell className="text-center text-gray-400 font-mono">
+                    <TableCell className={T.cls.td}>{sale.full_name}</TableCell>
+                    <TableCell className="text-center text-gray-500 font-mono">
                       {sale.bottles_sold}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-gray-300">
+                    <TableCell className="text-right font-mono text-gray-800">
                       £{Number(sale.bar_amount).toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-green-400">
+                    <TableCell className="text-right font-mono text-green-700">
                       £{Number(sale.cash_collected).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center text-lg">
                       {sale.paid_bar_directly ? "✅" : "❌"}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-blue-400">
+                    <TableCell className="text-right font-mono text-blue-700">
                       £{Number(sale.agency_amount).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -104,13 +97,13 @@ export default async function SalesPage() {
                               key={i}
                               href={url}
                               target="_blank"
-                              className="text-[#ffb6c1] hover:text-white transition-colors"
+                              className="text-pink-500 hover:text-pink-600 transition-colors"
                             >
                               <Receipt className="w-4 h-4" />
                             </a>
                           ))
                         ) : (
-                          <span className="text-[10px] text-gray-700 italic">
+                          <span className="text-[10px] text-gray-400 italic">
                             None
                           </span>
                         )}
@@ -124,14 +117,10 @@ export default async function SalesPage() {
                     colSpan={9}
                     className="h-48 text-center"
                   >
-                    <div className="flex flex-col items-center justify-center text-gray-500 gap-2">
+                    <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
                       <Database className="w-8 h-8 opacity-20" />
-                      <p className="text-sm font-medium text-gray-300">
+                      <p className="text-sm font-medium text-gray-800">
                         No records found
-                      </p>
-                      <p className="text-xs">
-                        Please submit your shift details via the tracker to see
-                        data here.
                       </p>
                     </div>
                   </TableCell>
