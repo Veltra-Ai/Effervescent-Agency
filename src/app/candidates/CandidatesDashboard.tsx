@@ -2221,7 +2221,10 @@ export function CandidatesDashboard({
           <div className="fixed top-4 right-6 z-50 flex items-center gap-3">
             <Link
               href="/"
-              className={T.cls.btnPrimary + " px-4 py-1.5 text-sm"}
+              className={
+                T.cls.btnPrimary +
+                " px-4 py-1.5 text-sm !bg-pink-600 hover:!bg-pink-600"
+              }
             >
               Application Form
             </Link>
