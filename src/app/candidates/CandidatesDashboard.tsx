@@ -1235,6 +1235,10 @@ function CandidateModal({
               label="Instagram"
               value={candidate.instagram}
             />
+            <InfoRow
+              label="Date of Birth"
+              value={candidate.dob ? formatDate(candidate.dob) : undefined}
+            />
           </Section>
 
           {/* Location */}
