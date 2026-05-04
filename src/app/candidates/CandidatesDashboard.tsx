@@ -33,6 +33,8 @@ import {
   Trash2,
   Pencil,
   FileText,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Candidate } from "./types";
 import {
@@ -449,11 +451,18 @@ function CandidateModal({
   candidate,
   onClose,
   onStatusChange,
+  allCandidates,
+  onNavigate,
 }: {
   candidate: Candidate;
   onClose: () => void;
   onStatusChange: (id: string, patch: Partial<Candidate>) => void;
+  allCandidates: Candidate[];
+  onNavigate: (c: Candidate) => void;
 }) {
+  const currentIndex = allCandidates.findIndex((c) => c.id === candidate.id);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < allCandidates.length - 1;
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState("");
   const [activeAction, setActiveAction] = useState<
@@ -725,6 +734,29 @@ function CandidateModal({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                hasPrev && onNavigate(allCandidates[currentIndex - 1])
+              }
+              disabled={!hasPrev}
+              className="text-white/70 hover:text-white transition-colors p-1 mt-1 disabled:opacity-30"
+              title="Previous candidate"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-white/50 text-xs mt-1">
+              {currentIndex + 1}/{allCandidates.length}
+            </span>
+            <button
+              onClick={() =>
+                hasNext && onNavigate(allCandidates[currentIndex + 1])
+              }
+              disabled={!hasNext}
+              className="text-white/70 hover:text-white transition-colors p-1 mt-1 disabled:opacity-30"
+              title="Next candidate"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
             <button
               onClick={() => setShowEditModal(true)}
               className="text-white/70 hover:text-white transition-colors p-1 mt-1"
@@ -2647,9 +2679,12 @@ export function CandidatesDashboard({
 
       {selected && (
         <CandidateModal
+          key={selected.id}
           candidate={selected}
           onClose={() => setSelected(null)}
           onStatusChange={handleStatusChange}
+          allCandidates={filtered}
+          onNavigate={(c) => setSelected(c)}
         />
       )}
     </div>
