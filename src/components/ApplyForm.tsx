@@ -251,7 +251,7 @@ function TextInput({
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
-      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm
+      className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm
         bg-white text-gray-900 placeholder:text-gray-400
         focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400
         disabled:opacity-50 transition-all"
@@ -276,7 +276,7 @@ function TextareaInput({
       rows={rows}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm
+      className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm
         bg-white text-gray-900 placeholder:text-gray-400
         focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400
         resize-none transition-all"
@@ -300,7 +300,7 @@ function SelectInput({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none px-3 py-2.5 border border-gray-300 rounded-xl text-sm
+        className="w-full appearance-none px-3 py-2.5 border border-pink-200 rounded-xl text-sm
           bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-400
           focus:border-pink-400 transition-all"
       >
@@ -650,12 +650,23 @@ export default function ApplyPage() {
   async function handleSubmit() {
     setSubmitting(true);
     setSubmitError("");
+
+    // ─── Optimization & Sanitization ──────────────────────────────────────────
+    const cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
+    const cleanEmail = form.email.trim().toLowerCase();
+    const cleanFullName = form.fullName.trim();
+    const cleanInstagram = form.instagram.trim();
+    const cleanManualCity = form.manualCity.trim();
+    const cleanHomeCity = form.homeCity.trim();
+    const cleanShareCode = form.shareCode.trim().toUpperCase();
+    const cleanPrevCompany = form.prevCompany.trim();
+
     try {
-      // Check if blacklisted
+      // Check if blacklisted using sanitized data
       const { data: blacklistedData } = await supabase
         .from("milli_candidates")
         .select("id")
-        .or(`email.eq.${form.email},phone.eq.${form.phone}`)
+        .or(`email.eq.${cleanEmail},phone.eq.${cleanPhone}`)
         .eq("blacklisted", true)
         .limit(1);
 
@@ -669,18 +680,18 @@ export default function ApplyPage() {
 
       const payload = {
         personalInfo: {
-          fullName: form.fullName,
+          fullName: cleanFullName,
           dateOfBirth: form.dob,
-          email: form.email,
-          phone: form.phone,
-          instagram: form.instagram,
+          email: cleanEmail,
+          phone: cleanPhone,
+          instagram: cleanInstagram,
         },
         location: {
           primaryLocation: form.primaryCity,
           secondLocation: form.secondCity,
-          manualLocation: form.manualCity,
+          manualLocation: cleanManualCity,
           isStudent: form.isStudent,
-          homeCity: form.homeCity,
+          homeCity: cleanHomeCity,
           doesDrive: form.doesDrive,
         },
         photos: {
@@ -697,15 +708,15 @@ export default function ApplyPage() {
               }
             : null,
           hasNonUkPassport: form.nonUkPassport,
-          shareCode: form.shareCode,
+          shareCode: cleanShareCode,
         },
         experience: {
           hasPriorExperience: form.priorExp,
-          previousCompany: form.prevCompany,
+          previousCompany: cleanPrevCompany,
           yearsOfExperience: form.yearsExp,
-          understandRole: form.understandRole,
-          whyGoodFit: form.whyFit,
-          salesExperience: form.salesExp,
+          understandRole: form.understandRole.trim(),
+          whyGoodFit: form.whyFit.trim(),
+          salesExperience: form.salesExp.trim(),
           availableFrom: form.startDate,
         },
         declarations: {
@@ -783,7 +794,7 @@ export default function ApplyPage() {
                     ? s === slide
                       ? "bg-pink-500 text-white ring-4 ring-pink-100"
                       : "bg-pink-500 text-white"
-                    : "bg-white text-gray-400 border border-gray-200"
+                    : "bg-gray-100 text-gray-400 border border-gray-300"
                 }`}
               >
                 {s < slide ? (
@@ -805,7 +816,7 @@ export default function ApplyPage() {
             </div>
           ))}
         </div>
-        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-200/50 rounded-full overflow-hidden">
           <div
             style={{ width: `${((slide - 1) / 4) * 100}%` }}
             className="h-full rounded-full bg-gradient-to-r from-pink-400 to-pink-600 transition-all duration-500 ease-out"
@@ -819,7 +830,7 @@ export default function ApplyPage() {
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
         }`}
       >
-        <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-3xl border border-pink-100 overflow-hidden shadow-sm">
           {/* Card Header */}
           <div className="px-6 py-5 bg-gradient-to-r from-pink-500 to-pink-400">
             <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-pink-100">

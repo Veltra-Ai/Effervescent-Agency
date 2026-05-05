@@ -472,25 +472,27 @@ function OnboardingForm() {
     setSubmitting(true);
     setSubmitError("");
     try {
+      const cleanEmergencyPhone = emergencyPhone.replace(/[\s\-\(\)]/g, "");
+
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           candidate_id: candidateId,
           onboarding: {
-            home_address: homeAddress,
-            emergency_contact_name: emergencyContactName,
-            emergency_contact_relationship: emergencyRelationship,
-            emergency_contact_phone: emergencyPhone,
+            home_address: homeAddress.trim(),
+            emergency_contact_name: emergencyContactName.trim(),
+            emergency_contact_relationship: emergencyRelationship.trim(),
+            emergency_contact_phone: cleanEmergencyPhone,
             bank_account_number: bankAccountNumber,
             bank_sort_code: bankSortCode,
           },
           availability: {
             unavailable_all_month: unavailableAll,
-            unavailable_reason: unavailableAll ? unavailableReason : "",
+            unavailable_reason: unavailableAll ? unavailableReason.trim() : "",
             dates: unavailableAll ? [] : selectedDates,
             locations: selectedLocations,
-            comments,
+            comments: comments.trim(),
           },
         }),
       });
