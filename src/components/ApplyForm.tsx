@@ -114,6 +114,12 @@ const COUNTRY_LABELS = getCountries().reduce((acc, country) => {
   return acc;
 }, {} as Record<string, string>);
 
+const SORTED_COUNTRIES = getCountries().sort((a, b) => {
+  const nameA = (en as any)[a] || "";
+  const nameB = (en as any)[b] || "";
+  return nameA.localeCompare(nameB);
+});
+
 const ALLOWED_ID_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const SLIDE_LABELS = [
@@ -903,11 +909,18 @@ export default function ApplyPage() {
                       international
                       withCountryCallingCode
                       defaultCountry="GB"
+                      countries={SORTED_COUNTRIES}
                       labels={COUNTRY_LABELS}
                       value={form.phone}
                       onChange={(v) => upd({ phone: v || "" })}
                       className="phone-input-wrapper"
                     />
+                    <div className="mt-2 bg-amber-50 border border-amber-100 rounded-xl p-2.5 flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-[11px] font-medium text-amber-800 leading-tight">
+                        Please use your number registered on WhatsApp only.
+                      </p>
+                    </div>
                   </div>
                   <style jsx global>{`
                     .phone-input-container .phone-input-wrapper {
