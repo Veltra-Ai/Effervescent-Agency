@@ -361,11 +361,10 @@ function YesNoToggle({
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`px-6 py-2 rounded-xl text-sm font-semibold border transition-all ${
-            value === opt
+          className={`px-6 py-2 rounded-xl text-sm font-semibold border transition-all ${value === opt
               ? "bg-pink-500 border-pink-500 text-white shadow-sm"
               : "bg-white text-gray-600 border-gray-300 hover:border-pink-400 hover:text-pink-500"
-          }`}
+            }`}
         >
           {opt === "yes" ? "Yes" : "No"}
         </button>
@@ -390,16 +389,14 @@ function RadioGroup({
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${
-            value === opt
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${value === opt
               ? "border-pink-500 bg-pink-50 text-gray-900"
               : "border-gray-200 bg-white text-gray-600 hover:border-pink-300 hover:text-gray-800"
-          }`}
+            }`}
         >
           <div
-            className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-              value === opt ? "border-pink-500" : "border-gray-300"
-            }`}
+            className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${value === opt ? "border-pink-500" : "border-gray-300"
+              }`}
           >
             {value === opt && (
               <div className="w-2 h-2 rounded-full bg-pink-500" />
@@ -429,11 +426,10 @@ function StyledCheckbox({
         id={id}
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(!!v)}
-        className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-          checked
+        className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${checked
             ? "bg-pink-500 border-pink-500"
             : "border-gray-300 bg-white hover:border-pink-400"
-        }`}
+          }`}
       >
         <CheckboxPrimitive.Indicator>
           <Check
@@ -724,10 +720,10 @@ export default function ApplyPage() {
           })),
           passportId: form.passportId
             ? {
-                name: form.passportId.name,
-                base64: form.passportId.base64,
-                type: form.passportId.type,
-              }
+              name: form.passportId.name,
+              base64: form.passportId.base64,
+              type: form.passportId.type,
+            }
             : null,
           hasNonUkPassport: form.nonUkPassport,
           shareCode: cleanShareCode,
@@ -811,13 +807,12 @@ export default function ApplyPage() {
               className="flex flex-col items-center gap-1 flex-1"
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                  s <= slide
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${s <= slide
                     ? s === slide
                       ? "bg-pink-500 text-white ring-4 ring-pink-100"
                       : "bg-pink-500 text-white"
                     : "bg-gray-100 text-gray-400 border border-gray-300"
-                }`}
+                  }`}
               >
                 {s < slide ? (
                   <Check
@@ -829,9 +824,8 @@ export default function ApplyPage() {
                 )}
               </div>
               <span
-                className={`text-[10px] font-medium text-center leading-none hidden sm:block ${
-                  s === slide ? "text-pink-500" : "text-gray-400"
-                }`}
+                className={`text-[10px] font-medium text-center leading-none hidden sm:block ${s === slide ? "text-pink-500" : "text-gray-400"
+                  }`}
               >
                 {SLIDE_LABELS[s - 1]}
               </span>
@@ -848,9 +842,8 @@ export default function ApplyPage() {
 
       {/* Slide Card */}
       <div
-        className={`max-w-xl mx-auto px-4 py-4 transition-all duration-200 ease-out ${
-          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-        }`}
+        className={`max-w-xl mx-auto px-4 py-4 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          }`}
       >
         <div className="bg-white rounded-3xl border border-pink-100 overflow-hidden shadow-sm">
           {/* Card Header */}
@@ -900,11 +893,6 @@ export default function ApplyPage() {
                 <div>
                   <FieldLabel required>Mobile Phone / WhatsApp</FieldLabel>
                   <div className="phone-input-container">
-                    <div className="flex flex-col gap-1.5 mb-1">
-                      <span className="text-[10px] font-bold text-pink-500 uppercase tracking-wider px-1">
-                        Select Country & Enter Number
-                      </span>
-                    </div>
                     <PhoneInput
                       international
                       withCountryCallingCode
