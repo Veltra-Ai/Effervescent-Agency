@@ -1223,7 +1223,7 @@ function CandidateModal({
                     },
                     {
                       field: "bank_details_submitted" as const,
-                      label: "Bank Details Submitted",
+                      label: "Onboarding Form Complete",
                     },
                   ] as const
                 ).map(({ field, label }) => (
