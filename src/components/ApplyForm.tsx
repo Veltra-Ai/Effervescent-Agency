@@ -12,6 +12,9 @@ import {
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import "react-phone-number-input/style.css";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -187,36 +190,6 @@ function isAtLeast18(dob: string): boolean {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age >= 18;
-}
-
-/**
- * Normalise any phone number to strict E.164 format: +[countrycode][number]
- * - Strips ALL spaces, dashes, dots, parentheses
- * - Does NOT assume any country — user must include their own country code
- * - If user typed digits without a leading +, we prepend + (they probably forgot it)
- * - Result is safe to store in DB and pass directly to WhatsApp / n8n API as-is
- *
- * Examples:
- *   "+971 50 123 4567"  → "+971501234567"
- *   "+44 7700 000000"   → "+447700000000"
- *   "+34 600 000 000"   → "+34600000000"
- *   "971501234567"      → "+971501234567"  (forgot the +)
- */
-function normalizePhone(raw: string): string {
-  let v = raw.trim();
-  v = v.replace(/[\s\-().]/g, "");
-  if (!v.startsWith("+") && /^\d+$/.test(v)) {
-    v = "+" + v;
-  }
-  return v;
-}
-
-/**
- * Validate E.164: must be + followed by 7–15 digits (ITU-T standard).
- * This covers all countries worldwide.
- */
-function isValidPhone(v: string): boolean {
-  return /^\+\d{7,15}$/.test(v);
 }
 
 function toBase64(file: File): Promise<string> {
@@ -563,10 +536,9 @@ export default function ApplyPage() {
       if (!form.email.trim()) e.email = "Email address is required";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = "Please enter a valid email address";
-      if (!form.phone.trim()) e.phone = "Phone number is required";
-      else if (!isValidPhone(form.phone))
-        e.phone =
-          "Must include your country code with no spaces — UK: +447700000000 · UAE: +971501234567 · Spain: +34600000000";
+      if (!form.phone || !form.phone.trim()) e.phone = "Phone number is required";
+      else if (!isValidPhoneNumber(form.phone))
+        e.phone = "Please enter a valid international phone number";
       if (!form.instagram.trim())
         e.instagram = "Instagram username is required";
     }
@@ -679,6 +651,22 @@ export default function ApplyPage() {
     setSubmitting(true);
     setSubmitError("");
     try {
+      // Check if blacklisted
+      const { data: blacklistedData } = await supabase
+        .from("milli_candidates")
+        .select("id")
+        .or(`email.eq.${form.email},phone.eq.${form.phone}`)
+        .eq("blacklisted", true)
+        .limit(1);
+
+      if (blacklistedData && blacklistedData.length > 0) {
+        setSubmitError(
+          "You are unable to apply at this time. Please contact us if you think this is a mistake.",
+        );
+        setSubmitting(false);
+        return;
+      }
+
       const payload = {
         personalInfo: {
           fullName: form.fullName,
@@ -878,41 +866,13 @@ export default function ApplyPage() {
                 {/* ── Phone — international-aware ── */}
                 <div>
                   <FieldLabel required>Mobile Phone / WhatsApp</FieldLabel>
-                  <TextInput
-                    type="tel"
+                  <PhoneInput
+                    international
+                    defaultCountry="GB"
                     value={form.phone}
-                    onChange={(v) => upd({ phone: v })}
-                    onBlur={() => {
-                      // Normalise on blur: strips spaces/dashes, ensures leading +
-                      if (form.phone.trim()) {
-                        upd({ phone: normalizePhone(form.phone) });
-                      }
-                    }}
-                    placeholder="+971501234567  ·  +447700000000  ·  +34600000000"
+                    onChange={(v) => upd({ phone: v || "" })}
+                    className="flex phone-input-container"
                   />
-                  {/* Clear, non-technical hint for all countries */}
-                  <div className="mt-2 rounded-xl px-3 py-2.5 text-xs leading-relaxed space-y-1 bg-pink-50 border border-pink-200">
-                    <p className="font-semibold text-pink-600">
-                      ⚠️ Important — include your country code
-                    </p>
-                    <p className="text-gray-600">
-                      Start with{" "}
-                      <span className="text-gray-800 font-medium">+</span>{" "}
-                      followed by your country code, then your number. No spaces
-                      or dashes.
-                    </p>
-                    <p className="text-gray-500">
-                      🇬🇧 UK: <span className="text-gray-700">+44</span>
-                      7700000000 &nbsp;·&nbsp; 🇦🇪 UAE:{" "}
-                      <span className="text-gray-700">+971</span>501234567
-                      &nbsp;·&nbsp; 🇪🇸 Spain:{" "}
-                      <span className="text-gray-700">+34</span>600000000
-                    </p>
-                    <p className="text-gray-400">
-                      We use this number to contact you via WhatsApp — a wrong
-                      number means we can&apos;t reach you.
-                    </p>
-                  </div>
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
