@@ -85,7 +85,7 @@ const STATUS_TRANSITIONS: Record<Candidate["status"], Candidate["status"][]> = {
   "rejected - non responsive": ["pending"],
   trial_offered: ["onboarding", "rejected"],
   onboarding: ["on-boarded", "rejected"],
-  "on-boarded": [],
+  "on-boarded": ["pending"],
   rejected: ["pending"],
 };
 
@@ -368,7 +368,7 @@ function EditProfileModal({
         <div
           className="px-6 py-4 flex items-center justify-between"
           style={{
-            background: `linear-gradient(135deg, ${T.brand.primary}, ${T.brand.primaryHover})`,
+            background: T.brand.primary,
           }}
         >
           <div className="flex items-center gap-2">
@@ -711,7 +711,7 @@ function CandidateModal({
         <div
           className="px-6 py-5 flex items-start justify-between"
           style={{
-            background: `linear-gradient(135deg, ${T.brand.primary}, ${T.brand.primaryHover})`,
+            background: T.brand.primary,
           }}
         >
           <div>
@@ -1521,28 +1521,6 @@ function CandidateModal({
             <h4 className={T.cls.sectionHeader}>Identity & Right to Work</h4>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <InfoRow
-                label="AI Verification"
-                value={
-                  candidate.ai_verification === "Passed" ? (
-                    <span
-                      className="flex items-center gap-1"
-                      style={{ color: T.text.badge.approved }}
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" /> Passed
-                    </span>
-                  ) : candidate.ai_verification === "Failed" ? (
-                    <span
-                      className="flex items-center gap-1"
-                      style={{ color: T.text.badge.rejected }}
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5" /> Failed
-                    </span>
-                  ) : (
-                    <span style={{ color: T.text.muted }}>Not checked</span>
-                  )
-                }
-              />
-              <InfoRow
                 label="UK Passport"
                 value={
                   candidate.is_uk_passport === null ? (
@@ -1722,7 +1700,12 @@ function CandidateModal({
                           borderColor: T.border.default,
                         }}
                       >
-                        {candidate.availability_dates.join(", ")}
+                        {[...candidate.availability_dates]
+                          .sort(
+                            (a, b) =>
+                              new Date(a).getTime() - new Date(b).getTime(),
+                          )
+                          .join(", ")}
                       </p>
                     </div>
                   )
@@ -1743,7 +1726,12 @@ function CandidateModal({
                       >
                         {JSON.parse(
                           candidate.availability_dates as unknown as string,
-                        ).join(", ")}
+                        )
+                          .sort(
+                            (a: string, b: string) =>
+                              new Date(a).getTime() - new Date(b).getTime(),
+                          )
+                          .join(", ")}
                       </p>
                     </div>
                   )}
@@ -2567,6 +2555,7 @@ export function CandidatesDashboard({
                             c.rotacloud_login &&
                             c.sumup_account &&
                             c.contract_signed &&
+                            c.bank_details_submitted &&
                             c.added_to_whatsapp_group ? (
                               <span title="All complete">🟢</span>
                             ) : (
