@@ -877,13 +877,31 @@ export default function ApplyPage() {
                 {/* ── Phone — international-aware ── */}
                 <div>
                   <FieldLabel required>Mobile Phone / WhatsApp</FieldLabel>
-                  <PhoneInput
-                    international
-                    defaultCountry="GB"
-                    value={form.phone}
-                    onChange={(v) => upd({ phone: v || "" })}
-                    className="flex phone-input-container"
-                  />
+                  <div className="phone-input-container">
+                    <PhoneInput
+                      international
+                      defaultCountry="GB"
+                      value={form.phone}
+                      onChange={(v) => upd({ phone: v || "" })}
+                      className="flex"
+                    />
+                  </div>
+                  <style jsx global>{`
+                    .phone-input-container .PhoneInputInput {
+                      width: 100%;
+                      padding: 10px 12px;
+                      border: 1px solid #fbcfe8 !important; /* border-pink-200 */
+                      border-radius: 12px;
+                      font-size: 14px;
+                      background-color: #ffffff;
+                      transition: all 0.2s;
+                      outline: none;
+                    }
+                    .phone-input-container .PhoneInputInput:focus {
+                      box-shadow: 0 0 0 2px #ec489933; /* pink-500 with alpha */
+                      border-color: #ec4899 !important; /* pink-500 */
+                    }
+                  `}</style>
                   <FieldError message={errors.phone} />
                 </div>
                 <div>
