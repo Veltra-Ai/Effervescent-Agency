@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import "react-phone-number-input/style.css";
-import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import PhoneInput, {
+  isValidPhoneNumber,
+  getCountryCallingCode,
+  getCountries,
+} from "react-phone-number-input";
+import en from "react-phone-number-input/locale/en.json";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,6 +103,17 @@ const ALLOWED_PHOTO_TYPES = [
   "image/png",
   "image/webp",
 ];
+const COUNTRY_LABELS = getCountries().reduce((acc, country) => {
+  const name = (en as any)[country] || country;
+  try {
+    const code = getCountryCallingCode(country);
+    acc[country] = `(+${code}) ${name}`;
+  } catch {
+    acc[country] = name;
+  }
+  return acc;
+}, {} as Record<string, string>);
+
 const ALLOWED_ID_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const SLIDE_LABELS = [
@@ -251,7 +267,7 @@ function TextInput({
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
-      className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm
+      className="w-full px-3 py-2 border border-pink-200 rounded-xl text-sm
         bg-white text-gray-900 placeholder:text-gray-400
         focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400
         disabled:opacity-50 transition-all"
@@ -276,7 +292,7 @@ function TextareaInput({
       rows={rows}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm
+      className="w-full px-3 py-2 border border-pink-200 rounded-xl text-sm
         bg-white text-gray-900 placeholder:text-gray-400
         focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400
         resize-none transition-all"
@@ -300,7 +316,7 @@ function SelectInput({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none px-3 py-2.5 border border-pink-200 rounded-xl text-sm
+        className="w-full appearance-none px-3 py-2 border border-pink-200 rounded-xl text-sm
           bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-400
           focus:border-pink-400 transition-all"
       >
@@ -878,28 +894,85 @@ export default function ApplyPage() {
                 <div>
                   <FieldLabel required>Mobile Phone / WhatsApp</FieldLabel>
                   <div className="phone-input-container">
+                    <div className="flex flex-col gap-1.5 mb-1">
+                      <span className="text-[10px] font-bold text-pink-500 uppercase tracking-wider px-1">
+                        Select Country & Enter Number
+                      </span>
+                    </div>
                     <PhoneInput
                       international
+                      withCountryCallingCode
                       defaultCountry="GB"
+                      labels={COUNTRY_LABELS}
                       value={form.phone}
                       onChange={(v) => upd({ phone: v || "" })}
-                      className="flex"
+                      className="phone-input-wrapper"
                     />
                   </div>
                   <style jsx global>{`
+                    .phone-input-container .phone-input-wrapper {
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                    }
+                    .phone-input-container .PhoneInputCountry {
+                      background-color: #fdf2f8; /* pink-50 */
+                      border: 2px solid #fbcfe8 !important; /* pink-200 */
+                      padding: 4px 8px;
+                      border-radius: 12px;
+                      transition: all 0.2s;
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      height: 40px;
+                    }
+                    .phone-input-container .PhoneInputCountry:hover {
+                      background-color: #fce7f3; /* pink-100 */
+                      border-color: #ec4899 !important; /* pink-500 */
+                    }
+                    .phone-input-container .PhoneInputCountryIcon {
+                      width: 24px !important;
+                      height: 16px !important;
+                      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                    }
+                    /* Style for the country calling code text next to the flag */
+                    .phone-input-container .PhoneInputCountry {
+                      font-size: 13px;
+                      font-weight: 600;
+                      color: #111827 !important;
+                      gap: 4px;
+                    }
+                    .phone-input-container .PhoneInputCountrySelectArrow {
+                      color: #ec4899;
+                      opacity: 0.8;
+                      margin-left: 4px;
+                      width: 7px;
+                      height: 7px;
+                    }
                     .phone-input-container .PhoneInputInput {
-                      width: 100%;
-                      padding: 10px 12px;
-                      border: 1px solid #fbcfe8 !important; /* border-pink-200 */
+                      flex: 1;
+                      height: 40px;
+                      padding: 8px 12px;
+                      border: 2px solid #fbcfe8 !important; /* border-pink-200 */
                       border-radius: 12px;
                       font-size: 14px;
+                      font-weight: 500;
                       background-color: #ffffff;
+                      color: #111827 !important;
                       transition: all 0.2s;
                       outline: none;
                     }
                     .phone-input-container .PhoneInputInput:focus {
-                      box-shadow: 0 0 0 2px #ec489933; /* pink-500 with alpha */
-                      border-color: #ec4899 !important; /* pink-500 */
+                      box-shadow: 0 0 0 3px #ec489922;
+                      border-color: #ec4899 !important;
+                    }
+                    .phone-input-container select {
+                      color: #111827 !important;
+                      background-color: #ffffff !important;
+                      cursor: pointer;
+                    }
+                    .phone-input-container .PhoneInputInput::placeholder {
+                      color: #9ca3af !important;
                     }
                   `}</style>
                   <FieldError message={errors.phone} />
