@@ -190,3 +190,16 @@ export async function updateCandidateProfile(
   if (error) return { error: error.message };
   return {};
 }
+
+export async function toggleBlacklist(
+  id: string,
+  blacklisted: boolean,
+): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from("milli_candidates")
+    .update({ blacklisted })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return {};
+}

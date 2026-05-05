@@ -55,6 +55,7 @@ export interface Candidate {
   added_to_whatsapp_group: boolean;
   staff_notes: string | null;
   whitelisted: boolean;
+  blacklisted: boolean;
   home_address: string | null;
   emergency_contact_name: string | null;
   emergency_contact_relationship: string | null;

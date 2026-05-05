@@ -49,6 +49,7 @@ import {
   updateStaffNotes,
   deleteCandidate,
   updateCandidateProfile,
+  toggleBlacklist,
 } from "./actions";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -966,6 +967,57 @@ function CandidateModal({
               </button>
             </div>
           )}
+
+          {/* Blacklist Toggle */}
+          <div
+            className="flex items-center justify-between py-2.5 px-4 rounded-xl border"
+            style={{
+              background: candidate.blacklisted ? "#1a0000" : T.bg.surfaceAlt,
+              borderColor: candidate.blacklisted ? "#7f1d1d" : T.border.default,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="text-sm font-semibold"
+                style={{
+                  color: candidate.blacklisted ? "#fca5a5" : T.text.secondary,
+                }}
+              >
+                🚫 {candidate.blacklisted ? "Blacklisted" : "Not Blacklisted"}
+              </span>
+              {candidate.blacklisted && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-red-900 text-red-300 font-semibold">
+                  Cannot reapply
+                </span>
+              )}
+            </div>
+            <button
+              onClick={async () => {
+                const newVal = !candidate.blacklisted;
+                const confirmed = window.confirm(
+                  newVal
+                    ? `Blacklist ${candidate.full_name}? They will not be able to reapply.`
+                    : `Remove blacklist from ${candidate.full_name}?`,
+                );
+                if (!confirmed) return;
+                const result = await toggleBlacklist(candidate.id, newVal);
+                if (!result.error)
+                  onStatusChange(candidate.id, { blacklisted: newVal });
+              }}
+              className="relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0"
+              style={{
+                background: candidate.blacklisted
+                  ? "#dc2626"
+                  : T.border.default,
+              }}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  candidate.blacklisted ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
 
           {candidate.status === "on-boarded" && (
             <div
