@@ -51,8 +51,6 @@ const VENUES = [
   "XOYO",
 ].sort();
 
-const STATUS_OPTIONS = ["Pending", "Paid", "Disputed"];
-
 interface SalesForm {
   date: string;
   city: string;
@@ -355,23 +353,6 @@ export default function SalesTrackerPage() {
                 required
               />
             )}
-
-            <FieldLabel required>Status</FieldLabel>
-            <select
-              className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium"
-              value={form.status}
-              onChange={(e) => upd({ status: e.target.value })}
-              required
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option
-                  key={s}
-                  value={s}
-                >
-                  {s}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Block 4: Image Uploads */}
