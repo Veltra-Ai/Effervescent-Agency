@@ -24,12 +24,23 @@ import {
 } from "lucide-react";
 
 const BRAND_PINK = "#FFB8D7";
-const STATUS_OPTIONS = ["Pending", "Paid", "Disputed"];
+const STATUS_OPTIONS = ["Pending", "Paid", "Follow up sent", "Disputed"];
+
+function rowBg(status: string) {
+  const map: Record<string, string> = {
+    Paid: "bg-green-50 hover:bg-green-100",
+    Pending: "bg-orange-50 hover:bg-orange-100",
+    "Follow up sent": "bg-red-50 hover:bg-red-100",
+    Disputed: "bg-red-50 hover:bg-red-100",
+  };
+  return map[status] ?? "";
+}
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
     Paid: "bg-green-100 text-green-700 border-green-200",
-    Pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    Pending: "bg-orange-100 text-orange-700 border-orange-200",
+    "Follow up sent": "bg-red-100 text-red-700 border-red-200",
     Disputed: "bg-red-100 text-red-700 border-red-200",
   };
   return map[status] ?? "bg-gray-100 text-gray-600 border-gray-200";
@@ -156,6 +167,36 @@ export default function SalesPage() {
           <h1 className="text-xl font-bold text-gray-900">Sales Ledger</h1>
         </div>
 
+        {/* Legend */}
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-xs text-gray-400 font-medium">Status:</span>
+          {[
+            {
+              label: "Paid",
+              cls: "bg-green-100 text-green-700 border-green-200",
+            },
+            {
+              label: "Pending",
+              cls: "bg-orange-100 text-orange-700 border-orange-200",
+            },
+            {
+              label: "Follow up sent",
+              cls: "bg-red-100 text-red-700 border-red-200",
+            },
+            {
+              label: "Disputed",
+              cls: "bg-red-100 text-red-700 border-red-200",
+            },
+          ].map(({ label, cls }) => (
+            <span
+              key={label}
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${cls}`}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+
         {monthKeys.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-gray-400 gap-2 h-48">
             <Database className="w-8 h-8 opacity-20" />
@@ -187,6 +228,9 @@ export default function SalesPage() {
                   <TableHeader className={T.cls.thead}>
                     <TableRow className="border-gray-100 hover:bg-transparent">
                       <TableHead className={T.cls.th}>Actions</TableHead>
+                      <TableHead className={T.cls.th + " text-center"}>
+                        Status
+                      </TableHead>
                       <TableHead className={T.cls.th}>Date</TableHead>
                       <TableHead className={T.cls.th}>City</TableHead>
                       <TableHead className={T.cls.th}>Venue</TableHead>
@@ -236,9 +280,6 @@ export default function SalesPage() {
                       <TableHead className={T.cls.th + " text-right"}>
                         Agency £
                       </TableHead>
-                      <TableHead className={T.cls.th + " text-center"}>
-                        Status
-                      </TableHead>
                       <TableHead className={T.cls.th + " text-right"}>
                         Images
                       </TableHead>
@@ -253,12 +294,17 @@ export default function SalesPage() {
                       const diff = Number(
                         liveCalc ? liveCalc.difference : (sale.difference ?? 0),
                       );
+                      const currentStatus =
+                        ((isEditing
+                          ? editState.status
+                          : sale.status) as string) ?? "Pending";
 
                       return (
                         <TableRow
                           key={sale.id}
-                          className={T.cls.tr}
+                          className={`${T.cls.tr} ${rowBg(currentStatus)}`}
                         >
+                          {/* Actions */}
                           <TableCell>
                             {isEditing ? (
                               <div className="flex gap-1">
@@ -283,6 +329,36 @@ export default function SalesPage() {
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
+                            )}
+                          </TableCell>
+
+                          {/* Status — first column */}
+                          <TableCell className="text-center">
+                            {isEditing ? (
+                              <select
+                                value={
+                                  (editState.status as string) ?? "Pending"
+                                }
+                                onChange={(e) =>
+                                  editField("status", e.target.value)
+                                }
+                                className="px-2 py-1 rounded-lg border border-pink-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-pink-300"
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option
+                                    key={s}
+                                    value={s}
+                                  >
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge(sale.status)}`}
+                              >
+                                {sale.status ?? "Pending"}
+                              </span>
                             )}
                           </TableCell>
 
@@ -333,8 +409,6 @@ export default function SalesPage() {
                               ? numInput("cash_collected")
                               : mono(sale.cash_collected)}
                           </TableCell>
-
-                          {/* Calculated — read-only, auto-updates live as you type */}
                           <TableCell className="text-right font-mono font-bold text-gray-900">
                             {mono(
                               liveCalc
@@ -356,7 +430,6 @@ export default function SalesPage() {
                                 : sale.agency_comm,
                             )}
                           </TableCell>
-
                           <TableCell className="text-right font-mono text-red-500">
                             {isEditing
                               ? numInput("deductions")
@@ -382,7 +455,6 @@ export default function SalesPage() {
                           >
                             {mono(diff)}
                           </TableCell>
-
                           <TableCell className="text-center text-lg">
                             {isEditing ? (
                               <input
@@ -426,36 +498,6 @@ export default function SalesPage() {
                               ? numInput("agency_amount")
                               : mono(sale.agency_amount)}
                           </TableCell>
-
-                          <TableCell className="text-center">
-                            {isEditing ? (
-                              <select
-                                value={
-                                  (editState.status as string) ?? "Pending"
-                                }
-                                onChange={(e) =>
-                                  editField("status", e.target.value)
-                                }
-                                className="px-2 py-1 rounded-lg border border-pink-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-pink-300"
-                              >
-                                {STATUS_OPTIONS.map((s) => (
-                                  <option
-                                    key={s}
-                                    value={s}
-                                  >
-                                    {s}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge(sale.status)}`}
-                              >
-                                {sale.status ?? "Pending"}
-                              </span>
-                            )}
-                          </TableCell>
-
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               {sale.receipt_images ? (
@@ -492,3 +534,4 @@ export default function SalesPage() {
     </div>
   );
 }
+  
