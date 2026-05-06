@@ -60,11 +60,7 @@ interface SalesForm {
   name: string;
   bottles: string;
   barEarning: string;
-  card: string;
   cash: string;
-  deductions: string;
-  agencyFee: string;
-  expectedRev: string;
   paidBarDirectly: "YES" | "NO";
   agencySentMoney: "YES" | "NO";
   agencyAmount: string;
@@ -80,11 +76,7 @@ const INITIAL: SalesForm = {
   name: "",
   bottles: "",
   barEarning: "",
-  card: "",
   cash: "",
-  deductions: "",
-  agencyFee: "",
-  expectedRev: "",
   paidBarDirectly: "NO",
   agencySentMoney: "NO",
   agencyAmount: "",
@@ -115,36 +107,6 @@ function FieldLabel({
   );
 }
 
-function CalcRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-        {label}
-      </span>
-      <span className="text-sm font-black text-gray-900 font-mono">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function calcValues(form: SalesForm) {
-  const cash = parseFloat(form.cash) || 0;
-  const card = parseFloat(form.card) || 0;
-  const barEarning = parseFloat(form.barEarning) || 0;
-  const deductions = parseFloat(form.deductions) || 0;
-  const agencyFee = parseFloat(form.agencyFee) || 0;
-  const expectedRev = parseFloat(form.expectedRev) || 0;
-
-  const totalRevenue = cash + card;
-  const sellerComm = (totalRevenue - barEarning) * 0.5;
-  const agencyComm = (totalRevenue - barEarning) * 0.5;
-  const actualRev = totalRevenue - deductions - agencyFee;
-  const difference = expectedRev - actualRev;
-
-  return { totalRevenue, sellerComm, agencyComm, actualRev, difference };
-}
-
 export default function SalesTrackerPage() {
   const [form, setForm] = useState<SalesForm>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
@@ -168,9 +130,6 @@ export default function SalesTrackerPage() {
     reader.readAsDataURL(file);
   };
 
-  const { totalRevenue, sellerComm, agencyComm, actualRev, difference } =
-    calcValues(form);
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -186,16 +145,7 @@ export default function SalesTrackerPage() {
       name: form.name,
       bottles: form.bottles,
       barEarning: form.barEarning,
-      card: form.card,
       cash: form.cash,
-      totalRevenue: totalRevenue.toFixed(2),
-      sellerComm: sellerComm.toFixed(2),
-      agencyComm: agencyComm.toFixed(2),
-      deductions: form.deductions,
-      agencyFee: form.agencyFee,
-      actualRev: actualRev.toFixed(2),
-      expectedRev: form.expectedRev,
-      difference: difference.toFixed(2),
       paidBarDirectly: form.paidBarDirectly,
       agencySentMoney: form.agencySentMoney,
       agencyAmount: form.agencyAmount,
@@ -267,7 +217,7 @@ export default function SalesTrackerPage() {
           onSubmit={handleSubmit}
           className="space-y-6"
         >
-          {/* ── Block 1: Basic Info ── */}
+          {/* Block 1: Basic Info */}
           <div className="p-8 rounded-[2rem] bg-white border border-gray-100 shadow-sm space-y-4">
             <FieldLabel required>Date</FieldLabel>
             <input
@@ -315,7 +265,7 @@ export default function SalesTrackerPage() {
             />
           </div>
 
-          {/* ── Block 2: Sales Figures ── */}
+          {/* Block 2: Sales Figures (seller-visible only) */}
           <div className="p-8 rounded-[2rem] bg-white border border-gray-100 shadow-sm space-y-4">
             <FieldLabel required>Exact Units Sold</FieldLabel>
             <input
@@ -339,92 +289,19 @@ export default function SalesTrackerPage() {
               required
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FieldLabel required>Card (£)</FieldLabel>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="£0.00"
-                  className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-                  value={form.card}
-                  onChange={(e) => upd({ card: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <FieldLabel required>Cash (£)</FieldLabel>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="£0.00"
-                  className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-                  value={form.cash}
-                  onChange={(e) => upd({ cash: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <FieldLabel>Deductions (£)</FieldLabel>
+            <FieldLabel required>Cash (£)</FieldLabel>
             <input
               type="number"
               step="0.01"
               placeholder="£0.00"
               className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-              value={form.deductions}
-              onChange={(e) => upd({ deductions: e.target.value })}
-            />
-
-            <FieldLabel>Agency Fee (£)</FieldLabel>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="£0.00"
-              className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-              value={form.agencyFee}
-              onChange={(e) => upd({ agencyFee: e.target.value })}
-            />
-
-            <FieldLabel>Expected Revenue (£)</FieldLabel>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="£0.00"
-              className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-              value={form.expectedRev}
-              onChange={(e) => upd({ expectedRev: e.target.value })}
+              value={form.cash}
+              onChange={(e) => upd({ cash: e.target.value })}
+              required
             />
           </div>
 
-          {/* ── Block 3: Live Calculations ── */}
-          <div className="p-8 rounded-[2rem] bg-white border border-gray-100 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-4">
-              Auto Calculations
-            </p>
-            <CalcRow
-              label="Total Revenue"
-              value={`£${totalRevenue.toFixed(2)}`}
-            />
-            <CalcRow
-              label="Seller Commission"
-              value={`£${sellerComm.toFixed(2)}`}
-            />
-            <CalcRow
-              label="Agency Commission"
-              value={`£${agencyComm.toFixed(2)}`}
-            />
-            <CalcRow
-              label="Actual Revenue"
-              value={`£${actualRev.toFixed(2)}`}
-            />
-            <CalcRow
-              label="Difference (Expected vs Actual)"
-              value={`£${difference.toFixed(2)}`}
-            />
-          </div>
-
-          {/* ── Block 4: Payment Questions ── */}
+          {/* Block 3: Payment Questions */}
           <div className="p-8 rounded-[2rem] bg-white border border-gray-100 shadow-sm space-y-4">
             <FieldLabel required>
               Did you make any payment to the bar?
@@ -497,7 +374,7 @@ export default function SalesTrackerPage() {
             </select>
           </div>
 
-          {/* ── Block 5: Image Uploads ── */}
+          {/* Block 4: Image Uploads */}
           <div className="p-8 rounded-[2rem] bg-white border border-gray-100 shadow-sm grid grid-cols-2 gap-4">
             {(["bottle", "payment"] as const).map((type) => (
               <div key={type}>
@@ -511,7 +388,7 @@ export default function SalesTrackerPage() {
                       alt="Receipt"
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   ) : (
                     <Upload className="text-gray-400" />

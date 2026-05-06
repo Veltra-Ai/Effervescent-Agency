@@ -1,5 +1,9 @@
-import { supabase } from "@/lib/supabase";
+// src/app/sales/page.tsx
+"use client";
+
+import { useEffect, useState } from "react";
 import { Sale } from "./types";
+import { getSales, updateSale } from "./actions";
 import { T } from "@/styles/theme";
 import {
   Table,
@@ -10,7 +14,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Receipt, ShoppingCart, Database } from "lucide-react";
+import {
+  Receipt,
+  ShoppingCart,
+  Database,
+  Pencil,
+  Check,
+  X,
+} from "lucide-react";
+
+const BRAND_PINK = "#FFB8D7";
+const STATUS_OPTIONS = ["Pending", "Paid", "Disputed"];
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
@@ -25,11 +39,112 @@ function mono(val: number | null | undefined) {
   return `£${Number(val ?? 0).toFixed(2)}`;
 }
 
-export default async function SalesPage() {
-  const { data: sales, error } = await supabase
-    .from("milli_sales")
-    .select("*")
-    .order("date_of_shift", { ascending: false });
+function calcDerived(sale: Partial<Sale>) {
+  const cash = Number(sale.cash_collected ?? 0);
+  const card = Number(sale.card_amount ?? 0);
+  const bar = Number(sale.bar_amount ?? 0);
+  const deductions = Number(sale.deductions ?? 0);
+  const agencyFee = Number(sale.agency_fee ?? 0);
+  const expectedRev = Number(sale.expected_rev ?? 0);
+  const total_revenue = cash + card;
+  const seller_comm = (total_revenue - bar) * 0.5;
+  const agency_comm = (total_revenue - bar) * 0.5;
+  const actual_rev = total_revenue - deductions - agencyFee;
+  const difference = expectedRev - actual_rev;
+  return { total_revenue, seller_comm, agency_comm, actual_rev, difference };
+}
+
+function groupByMonth(sales: Sale[]): Record<string, Sale[]> {
+  return sales.reduce(
+    (acc, sale) => {
+      const d = new Date(sale.date_of_shift);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(sale);
+      return acc;
+    },
+    {} as Record<string, Sale[]>,
+  );
+}
+
+function formatMonthKey(key: string) {
+  const [year, month] = key.split("-");
+  return new Date(Number(year), Number(month) - 1).toLocaleString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default function SalesPage() {
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editState, setEditState] = useState<Partial<Sale>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getSales()
+      .then(setSales)
+      .finally(() => setLoading(false));
+  }, []);
+
+  function startEdit(sale: Sale) {
+    setEditingId(sale.id);
+    setEditState({ ...sale });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditState({});
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      const updated = await updateSale(editingId, editState);
+      setSales((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
+      setEditingId(null);
+      setEditState({});
+    } catch (err: any) {
+      alert("Save failed: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function editField(key: keyof Sale, value: string | boolean) {
+    setEditState((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function numInput(key: keyof Sale) {
+    return (
+      <input
+        type="number"
+        step="0.01"
+        value={(editState[key] as number) ?? ""}
+        onChange={(e) => editField(key, e.target.value)}
+        className="w-24 px-2 py-1 rounded-lg border border-pink-300 bg-white text-gray-900 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-pink-300"
+      />
+    );
+  }
+
+  function textInput(key: keyof Sale, placeholder = "") {
+    return (
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={(editState[key] as string) ?? ""}
+        onChange={(e) => editField(key, e.target.value)}
+        className="w-28 px-2 py-1 rounded-lg border border-pink-300 bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-pink-300"
+      />
+    );
+  }
+
+  const grouped = groupByMonth(sales);
+  const monthKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+  if (loading) return <p className="p-10 text-gray-400 text-sm">Loading...</p>;
 
   return (
     <div className={`${T.cls.page} bg-gray-900 p-6 md:p-10`}>
@@ -41,190 +156,338 @@ export default async function SalesPage() {
           <h1 className="text-xl font-bold text-gray-900">Sales Ledger</h1>
         </div>
 
-        <div className={T.cls.tableWrap + " overflow-x-auto"}>
-          <Table>
-            <TableHeader className={T.cls.thead}>
-              <TableRow className="border-gray-100 hover:bg-transparent">
-                <TableHead className={T.cls.th}>Date</TableHead>
-                <TableHead className={T.cls.th}>City</TableHead>
-                <TableHead className={T.cls.th}>Venue</TableHead>
-                <TableHead className={T.cls.th}>Seller</TableHead>
-                <TableHead className={T.cls.th + " text-center"}>
-                  Units
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Bar Earning
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Card £
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Cash £
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Total Rev
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Seller Comm
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Agency Comm
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Deductions
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Agency Fee
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Expected Rev
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Actual Rev
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Difference
-                </TableHead>
-                <TableHead className={T.cls.th + " text-center"}>
-                  Paid Bar?
-                </TableHead>
-                <TableHead className={T.cls.th + " text-center"}>
-                  Agency Sent?
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Agency £
-                </TableHead>
-                <TableHead className={T.cls.th + " text-center"}>
-                  Status
-                </TableHead>
-                <TableHead className={T.cls.th + " text-right"}>
-                  Images
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sales && sales.length > 0 ? (
-                sales.map((sale: Sale) => {
-                  const diff = Number(sale.difference ?? 0);
-                  return (
-                    <TableRow
-                      key={sale.id}
-                      className={T.cls.tr}
-                    >
-                      <TableCell className="text-gray-500 text-xs whitespace-nowrap">
-                        {sale.date_of_shift}
-                      </TableCell>
-                      <TableCell className="text-gray-600 text-xs whitespace-nowrap">
-                        {sale.city ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="border-gray-200 text-gray-600 whitespace-nowrap"
-                        >
-                          {sale.venue}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className={T.cls.td + " whitespace-nowrap"}>
-                        {sale.full_name}
-                      </TableCell>
-                      <TableCell className="text-center text-gray-500 font-mono">
-                        {sale.bottles_sold}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-gray-800">
-                        {mono(sale.bar_amount)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-gray-800">
-                        {mono(sale.card_amount)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-green-700">
-                        {mono(sale.cash_collected)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-bold text-gray-900">
-                        {mono(sale.total_revenue)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-purple-700">
-                        {mono(sale.seller_comm)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-blue-700">
-                        {mono(sale.agency_comm)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-red-500">
-                        {mono(sale.deductions)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-orange-600">
-                        {mono(sale.agency_fee)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-gray-500">
-                        {mono(sale.expected_rev)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-gray-800">
-                        {mono(sale.actual_rev)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-mono font-bold ${diff < 0 ? "text-red-600" : "text-green-600"}`}
-                      >
-                        {mono(diff)}
-                      </TableCell>
-                      <TableCell className="text-center text-lg">
-                        {sale.paid_bar_directly ? "✅" : "❌"}
-                      </TableCell>
-                      <TableCell className="text-center text-lg">
-                        {sale.agency_sent_money ? "✅" : "❌"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-blue-700">
-                        {mono(sale.agency_amount)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge(sale.status)}`}
-                        >
-                          {sale.status ?? "Pending"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {sale.receipt_images ? (
-                            sale.receipt_images.split(", ").map((url, i) => (
-                              // Added the <a tag here
-                              <a
-                                key={i}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer" // Recommended for security with target="_blank"
-                                className="text-pink-500 hover:text-pink-600 transition-colors"
-                              >
-                                <Receipt className="w-4 h-4" />
-                              </a>
-                            ))
-                          ) : (
-                            <span className="text-[10px] text-gray-400 italic">
-                              None
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
+        {monthKeys.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-gray-400 gap-2 h-48">
+            <Database className="w-8 h-8 opacity-20" />
+            <p className="text-sm font-medium text-gray-800">
+              No records found
+            </p>
+          </div>
+        ) : (
+          monthKeys.map((monthKey) => (
+            <div
+              key={monthKey}
+              className="mb-10"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span
+                  className="text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full"
+                  style={{ backgroundColor: BRAND_PINK, color: "white" }}
+                >
+                  {formatMonthKey(monthKey)}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {grouped[monthKey].length} record
+                  {grouped[monthKey].length !== 1 ? "s" : ""}
+                </span>
+              </div>
+
+              <div className={T.cls.tableWrap + " overflow-x-auto"}>
+                <Table>
+                  <TableHeader className={T.cls.thead}>
+                    <TableRow className="border-gray-100 hover:bg-transparent">
+                      <TableHead className={T.cls.th}>Actions</TableHead>
+                      <TableHead className={T.cls.th}>Date</TableHead>
+                      <TableHead className={T.cls.th}>City</TableHead>
+                      <TableHead className={T.cls.th}>Venue</TableHead>
+                      <TableHead className={T.cls.th}>Seller</TableHead>
+                      <TableHead className={T.cls.th + " text-center"}>
+                        Units
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Bar Earning
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Card £
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Cash £
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Total Rev
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Seller Comm
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Agency Comm
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Deductions
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Agency Fee
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Expected Rev
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Actual Rev
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Difference
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-center"}>
+                        Paid Bar?
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-center"}>
+                        Agency Sent?
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Agency £
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-center"}>
+                        Status
+                      </TableHead>
+                      <TableHead className={T.cls.th + " text-right"}>
+                        Images
+                      </TableHead>
                     </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={21}
-                    className="h-48 text-center"
-                  >
-                    <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
-                      <Database className="w-8 h-8 opacity-20" />
-                      <p className="text-sm font-medium text-gray-800">
-                        No records found
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                  </TableHeader>
+                  <TableBody>
+                    {grouped[monthKey].map((sale) => {
+                      const isEditing = editingId === sale.id;
+                      const liveCalc = isEditing
+                        ? calcDerived(editState)
+                        : null;
+                      const diff = Number(
+                        liveCalc ? liveCalc.difference : (sale.difference ?? 0),
+                      );
+
+                      return (
+                        <TableRow
+                          key={sale.id}
+                          className={T.cls.tr}
+                        >
+                          <TableCell>
+                            {isEditing ? (
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={saveEdit}
+                                  disabled={saving}
+                                  className="p-1.5 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 disabled:opacity-50 transition-colors"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="p-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => startEdit(sale)}
+                                className="p-1.5 rounded-lg bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </TableCell>
+
+                          <TableCell className="text-gray-500 text-xs whitespace-nowrap">
+                            {isEditing
+                              ? textInput("date_of_shift")
+                              : sale.date_of_shift}
+                          </TableCell>
+                          <TableCell className="text-gray-600 text-xs whitespace-nowrap">
+                            {isEditing ? textInput("city") : (sale.city ?? "—")}
+                          </TableCell>
+                          <TableCell>
+                            {isEditing ? (
+                              textInput("venue")
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="border-gray-200 text-gray-600 whitespace-nowrap"
+                              >
+                                {sale.venue}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell
+                            className={T.cls.td + " whitespace-nowrap"}
+                          >
+                            {isEditing
+                              ? textInput("full_name")
+                              : sale.full_name}
+                          </TableCell>
+                          <TableCell className="text-center text-gray-500 font-mono">
+                            {isEditing
+                              ? numInput("bottles_sold")
+                              : sale.bottles_sold}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-gray-800">
+                            {isEditing
+                              ? numInput("bar_amount")
+                              : mono(sale.bar_amount)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-gray-800">
+                            {isEditing
+                              ? numInput("card_amount")
+                              : mono(sale.card_amount)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-green-700">
+                            {isEditing
+                              ? numInput("cash_collected")
+                              : mono(sale.cash_collected)}
+                          </TableCell>
+
+                          {/* Calculated — read-only, auto-updates live as you type */}
+                          <TableCell className="text-right font-mono font-bold text-gray-900">
+                            {mono(
+                              liveCalc
+                                ? liveCalc.total_revenue
+                                : sale.total_revenue,
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-purple-700">
+                            {mono(
+                              liveCalc
+                                ? liveCalc.seller_comm
+                                : sale.seller_comm,
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-blue-700">
+                            {mono(
+                              liveCalc
+                                ? liveCalc.agency_comm
+                                : sale.agency_comm,
+                            )}
+                          </TableCell>
+
+                          <TableCell className="text-right font-mono text-red-500">
+                            {isEditing
+                              ? numInput("deductions")
+                              : mono(sale.deductions)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-orange-600">
+                            {isEditing
+                              ? numInput("agency_fee")
+                              : mono(sale.agency_fee)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-gray-500">
+                            {isEditing
+                              ? numInput("expected_rev")
+                              : mono(sale.expected_rev)}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-gray-800">
+                            {mono(
+                              liveCalc ? liveCalc.actual_rev : sale.actual_rev,
+                            )}
+                          </TableCell>
+                          <TableCell
+                            className={`text-right font-mono font-bold ${diff < 0 ? "text-red-600" : "text-green-600"}`}
+                          >
+                            {mono(diff)}
+                          </TableCell>
+
+                          <TableCell className="text-center text-lg">
+                            {isEditing ? (
+                              <input
+                                type="checkbox"
+                                checked={!!editState.paid_bar_directly}
+                                onChange={(e) =>
+                                  editField(
+                                    "paid_bar_directly",
+                                    e.target.checked,
+                                  )
+                                }
+                                className="w-4 h-4 accent-pink-400"
+                              />
+                            ) : sale.paid_bar_directly ? (
+                              "✅"
+                            ) : (
+                              "❌"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center text-lg">
+                            {isEditing ? (
+                              <input
+                                type="checkbox"
+                                checked={!!editState.agency_sent_money}
+                                onChange={(e) =>
+                                  editField(
+                                    "agency_sent_money",
+                                    e.target.checked,
+                                  )
+                                }
+                                className="w-4 h-4 accent-pink-400"
+                              />
+                            ) : sale.agency_sent_money ? (
+                              "✅"
+                            ) : (
+                              "❌"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-blue-700">
+                            {isEditing
+                              ? numInput("agency_amount")
+                              : mono(sale.agency_amount)}
+                          </TableCell>
+
+                          <TableCell className="text-center">
+                            {isEditing ? (
+                              <select
+                                value={
+                                  (editState.status as string) ?? "Pending"
+                                }
+                                onChange={(e) =>
+                                  editField("status", e.target.value)
+                                }
+                                className="px-2 py-1 rounded-lg border border-pink-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-pink-300"
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option
+                                    key={s}
+                                    value={s}
+                                  >
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge(sale.status)}`}
+                              >
+                                {sale.status ?? "Pending"}
+                              </span>
+                            )}
+                          </TableCell>
+
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              {sale.receipt_images ? (
+                                sale.receipt_images
+                                  .split(", ")
+                                  .map((url, i) => (
+                                    <a
+                                      key={i}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-pink-500 hover:text-pink-600 transition-colors"
+                                    >
+                                      <Receipt className="w-4 h-4" />
+                                    </a>
+                                  ))
+                              ) : (
+                                <span className="text-[10px] text-gray-400 italic">
+                                  None
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
