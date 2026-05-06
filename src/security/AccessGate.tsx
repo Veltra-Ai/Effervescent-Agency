@@ -1,10 +1,6 @@
 "use client";
 
-/**
- * Toggle: set to false in development to bypass the auth gate entirely.
- * Set to true to require the access code on the /candidates route.
- */
-const AUTH_ENABLED = false;
+const AUTH_ENABLED = true;
 
 const SESSION_KEY = "cand_auth_ok";
 
