@@ -35,6 +35,7 @@ import {
   FileText,
   ChevronRight,
   ChevronLeft,
+  Upload,
 } from "lucide-react";
 import { Candidate } from "./types";
 import {
@@ -484,6 +485,10 @@ function CandidateModal({
   const [trialError, setTrialError] = useState("");
 
   const [staffNotes, setStaffNotes] = useState(candidate.staff_notes ?? "");
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null);
+  const [pendingUploadPreview, setPendingUploadPreview] = useState<
+    string | null
+  >(null);
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [notesError, setNotesError] = useState("");
@@ -1385,6 +1390,79 @@ function CandidateModal({
               </div>
             </div>
           )}
+
+          {/* Staff Upload */}
+          <div className="mt-3">
+            <label
+              htmlFor={`staff-upload-${candidate.id}`}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm transition-colors"
+              style={{
+                borderColor: T.border.default,
+                color: T.text.muted,
+                background: T.bg.surfaceAlt,
+              }}
+            >
+              <Upload className="w-4 h-4" />
+              Upload Photo
+            </label>
+            <input
+              id={`staff-upload-${candidate.id}`}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setPendingUploadFile(file);
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setPendingUploadPreview(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+            {pendingUploadPreview && (
+              <div className="mt-3 space-y-2">
+                <div className="relative w-full h-48">
+                  <Image
+                    src={pendingUploadPreview}
+                    alt="Preview"
+                    fill
+                    className="object-contain rounded-xl border"
+                    style={{ borderColor: T.border.default }}
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!pendingUploadFile) return;
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                      const base64 = reader.result as string;
+                      await fetch(
+                        "https://n8n.veltraai.net/webhook/staff-photo-upload",
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            candidate_id: candidate.id,
+                            image: base64,
+                          }),
+                        },
+                      );
+                      window.alert("Photo saved!");
+                      setPendingUploadFile(null);
+                      setPendingUploadPreview(null);
+                    };
+                    reader.readAsDataURL(pendingUploadFile);
+                  }}
+                  className={T.cls.btnPrimary}
+                >
+                  <Save className="w-4 h-4" />
+                  Save Photo
+                </button>
+              </div>
+            )}
+          </div>
 
           {candidate.certificate_url && (
             <div className="space-y-3">
