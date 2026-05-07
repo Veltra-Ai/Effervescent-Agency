@@ -103,16 +103,20 @@ const ALLOWED_PHOTO_TYPES = [
   "image/png",
   "image/webp",
 ];
-const COUNTRY_LABELS = getCountries().reduce((acc, country) => {
-  const name = (en as any)[country] || country;
-  try {
-    const code = getCountryCallingCode(country);
-    acc[country] = `(+${code}) ${name}`;
-  } catch {
-    acc[country] = name;
-  }
-  return acc;
-}, {} as Record<string, string>);
+const COUNTRY_LABELS = getCountries().reduce(
+  (acc, country) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const name = (en as any)[country] || country;
+    try {
+      const code = getCountryCallingCode(country);
+      acc[country] = `(+${code}) ${name}`;
+    } catch {
+      acc[country] = name;
+    }
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 const SORTED_COUNTRIES = getCountries().sort((a, b) => {
   const nameA = (en as any)[a] || "";
@@ -220,6 +224,30 @@ function toBase64(file: File): Promise<string> {
     r.onload = () => res(r.result as string);
     r.onerror = rej;
     r.readAsDataURL(file);
+  });
+}
+
+function compressImage(
+  file: File,
+  maxWidth = 1200,
+  quality = 0.82,
+): Promise<string> {
+  return new Promise((res, rej) => {
+    const img = document.createElement("img");
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas
+        .getContext("2d")!
+        .drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      res(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = rej;
+    img.src = url;
   });
 }
 
@@ -361,10 +389,11 @@ function YesNoToggle({
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`px-6 py-2 rounded-xl text-sm font-semibold border transition-all ${value === opt
+          className={`px-6 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            value === opt
               ? "bg-pink-500 border-pink-500 text-white shadow-sm"
               : "bg-white text-gray-600 border-gray-300 hover:border-pink-400 hover:text-pink-500"
-            }`}
+          }`}
         >
           {opt === "yes" ? "Yes" : "No"}
         </button>
@@ -389,14 +418,16 @@ function RadioGroup({
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${value === opt
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium text-left transition-all ${
+            value === opt
               ? "border-pink-500 bg-pink-50 text-gray-900"
               : "border-gray-200 bg-white text-gray-600 hover:border-pink-300 hover:text-gray-800"
-            }`}
+          }`}
         >
           <div
-            className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${value === opt ? "border-pink-500" : "border-gray-300"
-              }`}
+            className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+              value === opt ? "border-pink-500" : "border-gray-300"
+            }`}
           >
             {value === opt && (
               <div className="w-2 h-2 rounded-full bg-pink-500" />
@@ -426,10 +457,11 @@ function StyledCheckbox({
         id={id}
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(!!v)}
-        className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${checked
+        className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+          checked
             ? "bg-pink-500 border-pink-500"
             : "border-gray-300 bg-white hover:border-pink-400"
-          }`}
+        }`}
       >
         <CheckboxPrimitive.Indicator>
           <Check
@@ -554,7 +586,8 @@ export default function ApplyPage() {
       if (!form.email.trim()) e.email = "Email address is required";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
         e.email = "Please enter a valid email address";
-      if (!form.phone || !form.phone.trim()) e.phone = "Phone number is required";
+      if (!form.phone || !form.phone.trim())
+        e.phone = "Phone number is required";
       else if (!isValidPhoneNumber(form.phone))
         e.phone = "Please enter a valid international phone number";
       if (!form.instagram.trim())
@@ -617,8 +650,8 @@ export default function ApplyPage() {
     setPhotoUploadError("");
     const current = [...form.photos];
     for (const file of Array.from(files)) {
-      if (current.length >= 5) {
-        setPhotoUploadError("Maximum 5 photos allowed");
+      if (current.length >= 2) {
+        setPhotoUploadError("Maximum 2 photos allowed");
         break;
       }
       if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
@@ -633,7 +666,7 @@ export default function ApplyPage() {
       }
       current.push({
         name: file.name,
-        base64: await toBase64(file),
+        base64: await compressImage(file),
         size: file.size,
         type: file.type,
       });
@@ -657,7 +690,7 @@ export default function ApplyPage() {
     upd({
       passportId: {
         name: file.name,
-        base64: await toBase64(file),
+        base64: await compressImage(file, 1600, 0.88), // slightly higher quality for ID readability
         size: file.size,
         type: file.type,
       },
@@ -720,10 +753,10 @@ export default function ApplyPage() {
           })),
           passportId: form.passportId
             ? {
-              name: form.passportId.name,
-              base64: form.passportId.base64,
-              type: form.passportId.type,
-            }
+                name: form.passportId.name,
+                base64: form.passportId.base64,
+                type: form.passportId.type,
+              }
             : null,
           hasNonUkPassport: form.nonUkPassport,
           shareCode: cleanShareCode,
@@ -807,12 +840,13 @@ export default function ApplyPage() {
               className="flex flex-col items-center gap-1 flex-1"
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${s <= slide
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  s <= slide
                     ? s === slide
                       ? "bg-pink-500 text-white ring-4 ring-pink-100"
                       : "bg-pink-500 text-white"
                     : "bg-gray-100 text-gray-400 border border-gray-300"
-                  }`}
+                }`}
               >
                 {s < slide ? (
                   <Check
@@ -824,8 +858,9 @@ export default function ApplyPage() {
                 )}
               </div>
               <span
-                className={`text-[10px] font-medium text-center leading-none hidden sm:block ${s === slide ? "text-pink-500" : "text-gray-400"
-                  }`}
+                className={`text-[10px] font-medium text-center leading-none hidden sm:block ${
+                  s === slide ? "text-pink-500" : "text-gray-400"
+                }`}
               >
                 {SLIDE_LABELS[s - 1]}
               </span>
@@ -842,8 +877,9 @@ export default function ApplyPage() {
 
       {/* Slide Card */}
       <div
-        className={`max-w-xl mx-auto px-4 py-4 transition-all duration-200 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-          }`}
+        className={`max-w-xl mx-auto px-4 py-4 transition-all duration-200 ease-out ${
+          visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        }`}
       >
         <div className="bg-white rounded-3xl border border-pink-100 overflow-hidden shadow-sm">
           {/* Card Header */}
@@ -910,7 +946,10 @@ export default function ApplyPage() {
                       </p>
                     </div>
                   </div>
-                  <style jsx global>{`
+                  <style
+                    jsx
+                    global
+                  >{`
                     .phone-input-container .phone-input-wrapper {
                       display: flex;
                       align-items: center;
@@ -934,7 +973,7 @@ export default function ApplyPage() {
                     .phone-input-container .PhoneInputCountryIcon {
                       width: 24px !important;
                       height: 16px !important;
-                      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
                     }
                     /* Style for the country calling code text next to the flag */
                     .phone-input-container .PhoneInputCountry {
@@ -1066,7 +1105,8 @@ export default function ApplyPage() {
                 <div>
                   <FieldLabel required>Photos of Yourself</FieldLabel>
                   <p className="text-xs text-gray-500 mb-2">
-                    Upload 2 photos. JPG, PNG, or WEBP only. Max 10MB each.
+                    Upload exactly 2 photos of yourself. JPG, PNG, or WEBP only.
+                    Max 10MB each.
                   </p>
                   <label
                     htmlFor="photos-input"
@@ -1078,7 +1118,8 @@ export default function ApplyPage() {
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {form.photos.length} / 2 uploaded
-                      {form.photos.length < 2 && " (need at least 2)"}
+                      {form.photos.length < 2 &&
+                        ` (need ${2 - form.photos.length} more)`}
                     </p>
                   </label>
                   <input
