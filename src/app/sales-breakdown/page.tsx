@@ -51,6 +51,65 @@ const VENUES = [
   "XOYO",
 ].sort();
 
+const UK_CITIES = [
+  "Aberdeen",
+  "Bedford",
+  "Billericay (Essex)",
+  "Birmingham",
+  "Bristol",
+  "Cardiff",
+  "Chelmsford",
+  "Cheltenham",
+  "Chester",
+  "Chichester",
+  "Colchester",
+  "Coventry",
+  "Derby",
+  "Dundee",
+  "Evesham",
+  "Exeter",
+  "Glasgow",
+  "Guildford",
+  "Herne Bay",
+  "Hinckley",
+  "Hull",
+  "Inverness",
+  "Leicester",
+  "Leeds",
+  "Liverpool",
+  "London - Aldgate",
+  "London - Camden",
+  "London - Edgware",
+  "London - Greenwich",
+  "London - Harlesden",
+  "London - Hounslow",
+  "Loughborough",
+  "Manchester",
+  "Mansfield",
+  "Margate",
+  "Milton Keynes",
+  "Newcastle",
+  "Newport",
+  "Northampton",
+  "Nottingham",
+  "Peterborough",
+  "Plymouth",
+  "Portsmouth/Southsea",
+  "Sheffield",
+  "Southend",
+  "Solihull",
+  "Southampton",
+  "St Albans",
+  "Walsall",
+  "Wolverhampton",
+  "Worthing",
+  "Thanet",
+  "Swansea",
+  "Wrexham",
+  "Winchester",
+  "Worcester",
+];
+
 interface SalesForm {
   date: string;
   city: string;
@@ -227,13 +286,22 @@ export default function SalesTrackerPage() {
             />
 
             <FieldLabel required>City</FieldLabel>
-            <input
-              className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium placeholder:text-gray-400"
-              placeholder="e.g. Manchester"
+            <select
+              className="w-full rounded-2xl px-6 py-4 bg-gray-50 border border-gray-200 text-gray-900 font-medium"
               value={form.city}
               onChange={(e) => upd({ city: e.target.value })}
               required
-            />
+            >
+              <option value="">Select City</option>
+              {UK_CITIES.map((city) => (
+                <option
+                  key={city}
+                  value={city}
+                >
+                  {city}
+                </option>
+              ))}
+            </select>
 
             <FieldLabel required>Venue</FieldLabel>
             <select
